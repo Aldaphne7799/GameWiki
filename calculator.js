@@ -136,6 +136,33 @@ const setAllOres = (state) => {
 document.getElementById("selectAllBtn").addEventListener("click", () => setAllOres(true));
 document.getElementById("clearBtn").addEventListener("click", () => setAllOres(false));
 
+/* ============ SYNC CURRENT LEVEL <-> CURRENT XP ============ */
+
+const currentLevelEl = document.getElementById("currentLevel");
+const currentXpEl = document.getElementById("currentXp");
+
+// XP -> level: update the level box to match the XP entered
+function syncLevelFromXp() {
+  const raw = currentXpEl.value.trim();
+  if (raw === "") return;
+  const xp = parseFloat(raw);
+  if (isNaN(xp) || xp < 0) return;
+  currentLevelEl.value = Math.min(levelForXp(xp), 199);
+}
+
+currentXpEl.addEventListener("input", syncLevelFromXp);
+currentXpEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    syncLevelFromXp();
+    document.getElementById("calcBtn").click(); // optional: remove to just sync
+  }
+});
+
+// Level -> XP: typing a level clears the XP box so the level takes effect
+currentLevelEl.addEventListener("input", () => {
+  currentXpEl.value = "";
+});
+
 /* ============ CALCULATE ============ */
 
 document.getElementById("calcBtn").addEventListener("click", () => {
