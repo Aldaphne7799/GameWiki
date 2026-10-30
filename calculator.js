@@ -32,7 +32,7 @@ const fmt = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 1 });
 const ORES = [
   { name: "Copper",             level: 1,  xp: 10   },
   { name: "Tin",                level: 1,  xp: 10   },
-  { name: "Crystal",            level: 8,  xp: 17.5 },
+  { name: "Crystal",            level: 6,  xp: 17.5 },
   { name: "Iron",               level: 11, xp: 23   },
   { name: "Coal",               level: 21, xp: 38.5 },
   { name: "Mithril",            level: 31, xp: 56.5 },
