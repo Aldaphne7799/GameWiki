@@ -99,7 +99,7 @@ button:hover {
   border-color: var(--accent);
 }
 
-#calculateBtn,
+#calcBtn,
 button[type="submit"] {
   background: var(--accent);
   border-color: var(--accent);
@@ -108,7 +108,7 @@ button[type="submit"] {
   padding: 10px 28px;
 }
 
-#calculateBtn:hover,
+#calcBtn:hover,
 button[type="submit"]:hover {
   filter: brightness(1.1);
 }
