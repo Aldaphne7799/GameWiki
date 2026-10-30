@@ -205,11 +205,34 @@ function updateMixTotal() {
 function rebuildMixInputs() {
   const idx = selectedOreIndexes();
 
-  // Remember what the player has typed so far
-  const previous = {};
-  document.querySelectorAll(".mixInput").forEach((el) => {
-    previous[el.dataset.ore] = el.value;
+  mixInputs.innerHTML = "";
+
+  if (idx.length < 2) {
+    mixSection.hidden = true;
+    return;
+  }
+  mixSection.hidden = false;
+
+  // Even split: 100 / number of ores, last row takes the rounding remainder
+  const even = Math.round((100 / idx.length) * 10) / 10;
+
+  idx.forEach((i, n) => {
+    const value = n === idx.length - 1
+      ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
+      : even;
+
+    const row = document.createElement("label");
+    row.className = "mix-row";
+    row.innerHTML = `<span>${ORES[i].name}</span>
+      <span><input type="number" class="mixInput" data-ore="${i}" min="0" max="100" step="0.1" value="${value}" placeholder="0" /> %</span>`;
+    mixInputs.appendChild(row);
   });
+
+  mixInputs.querySelectorAll(".mixInput").forEach((el) =>
+    el.addEventListener("input", updateMixTotal)
+  );
+  updateMixTotal();
+}
 
   mixInputs.innerHTML = "";
 
