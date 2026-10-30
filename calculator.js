@@ -29,6 +29,21 @@ const fmt = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 1 });
 
 /* ============ MINING DATA (verify against your spreadsheet) ============ */
 
+/* ============ DATA ============ */
+
+const SKILLS = [
+  { id: "mining",      name: "Mining",      icon: "⛏️", active: true },
+  { id: "smithing",    name: "Smithing",    icon: "🔨" },
+  { id: "woodcutting", name: "Woodcutting", icon: "🪓" },
+  { id: "fletching",   name: "Fletching",   icon: "🏹" },
+  { id: "crafting",    name: "Crafting",    icon: "🧵" },
+  { id: "alchemy",     name: "Alchemy",     icon: "⚗️" },
+  { id: "fishing",     name: "Fishing",     icon: "🎣" },
+  { id: "cooking",     name: "Cooking",     icon: "🍳" },
+  { id: "firemaking",  name: "Firemaking",  icon: "🔥" },
+  { id: "farming",     name: "Farming",     icon: "🌾" },
+];
+
 const ORES = [
   { name: "Copper",             level: 1,  xp: 10   },
   { name: "Tin",                level: 1,  xp: 10   },
@@ -59,9 +74,91 @@ function xpWithBonus(baseXp, bonusPercent) {
   return Math.round(raw * 10 + 1e-9) / 10;
 }
 
-/* ============ UI SETUP ============ */
+/* ============ ELEMENTS ============ */
 
-const logSelect = document.getElementById("logSelect");
+const $ = (id) => document.getElementById(id);
+
+const skillGrid = $("skillGrid");
+const step2 = $("step2");
+const step3 = $("step3");
+const resultPanel = $("resultPanel");
+const resultEl = $("result");
+
+const currentLevelEl = $("currentLevel");
+const currentXpEl = $("currentXp");
+const targetLevelEl = $("targetLevel");
+const targetXpEl = $("targetXp");
+
+const logSelect = $("logSelect");
+const oreGrid = $("oreGrid");
+const mixSection = $("mixSection");
+const mixInputs = $("mixInputs");
+const mixTotal = $("mixTotal");
+
+/* ============ STEP 1: SKILL GRID ============ */
+
+SKILLS.forEach((skill) => {
+  const tile = document.createElement("button");
+  tile.type = "button";
+  tile.className = "skill-tile" + (skill.active ? "" : " disabled");
+  tile.dataset.skill = skill.id;
+  tile.disabled = !skill.active;
+  tile.innerHTML = `
+    <span class="skill-icon">${skill.icon}</span>
+    <span class="skill-name">${skill.name}</span>
+    ${skill.active ? "" : '<span class="soon">Coming soon</span>'}`;
+  if (skill.active) tile.addEventListener("click", () => selectSkill(skill.id));
+  skillGrid.appendChild(tile);
+});
+
+function selectSkill(id) {
+  document.querySelectorAll(".skill-tile").forEach((t) =>
+    t.classList.toggle("selected", t.dataset.skill === id)
+  );
+  // Mining is the only skill with data for now
+  step2.hidden = false;
+  step3.hidden = false;
+}
+
+/* ============ SYNC LEVEL <-> XP (both directions, both pairs) ============ */
+
+// Level -> XP: start of that level. XP -> Level: highest level reached.
+// A flag prevents the two handlers from triggering each other in a loop.
+function linkLevelAndXp(levelEl, xpEl, maxLevel) {
+  let syncing = false;
+
+  xpEl.addEventListener("input", () => {
+    if (syncing) return;
+    const raw = xpEl.value.trim();
+    if (raw === "") return;
+    const xp = parseFloat(raw);
+    if (isNaN(xp) || xp < 0) return;
+    syncing = true;
+    levelEl.value = Math.min(levelForXp(xp), maxLevel);
+    syncing = false;
+  });
+
+  levelEl.addEventListener("input", () => {
+    if (syncing) return;
+    const lvl = parseInt(levelEl.value, 10);
+    if (isNaN(lvl) || lvl < 1 || lvl > maxLevel) return;
+    syncing = true;
+    xpEl.value = totalXpForLevel(lvl);
+    syncing = false;
+  });
+}
+
+linkLevelAndXp(currentLevelEl, currentXpEl, 199);
+linkLevelAndXp(targetLevelEl, targetXpEl, 200);
+
+[currentXpEl, targetXpEl].forEach((el) =>
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") $("calcBtn").click();
+  })
+);
+
+/* ============ STEP 3: LOGS + ORES ============ */
+
 LOGS.forEach((log, i) => {
   const opt = document.createElement("option");
   opt.value = i;
@@ -69,52 +166,78 @@ LOGS.forEach((log, i) => {
   logSelect.appendChild(opt);
 });
 
-const oreGrid = document.getElementById("oreGrid");
 ORES.forEach((ore, i) => {
   const label = document.createElement("label");
   label.className = "ore-item";
   label.innerHTML = `
     <input type="checkbox" class="oreCheck" value="${i}" />
-    ${ore.name} <span class="note">(Lv ${ore.level}, ${ore.xp} xp)</span>`;
+    <span class="ore-name">${ore.name}</span>
+    <span class="ore-meta">Req. Lv ${ore.level} · ${ore.xp} XP</span>`;
   oreGrid.appendChild(label);
 });
 
-const mixSection = document.getElementById("mixSection");
-const mixInputs = document.getElementById("mixInputs");
-const mixTotal = document.getElementById("mixTotal");
+const selectedOreIndexes = () =>
+  [...document.querySelectorAll(".oreCheck:checked")].map((c) => parseInt(c.value, 10));
 
-function selectedOreIndexes() {
-  return [...document.querySelectorAll(".oreCheck:checked")].map((c) => parseInt(c.value, 10));
+// Visual hint (not a lock) for ores above the current level
+function updateLevelHints() {
+  const lvl = parseInt(currentLevelEl.value, 10) || 1;
+  document.querySelectorAll(".ore-item").forEach((label, i) => {
+    label.classList.toggle("above-level", lvl < ORES[i].level);
+  });
 }
+currentLevelEl.addEventListener("input", updateLevelHints);
+currentXpEl.addEventListener("input", updateLevelHints);
+updateLevelHints();
+
+/* ============ MANUAL PERCENTAGE SPLIT ============ */
 
 function updateMixTotal() {
   const sum = [...document.querySelectorAll(".mixInput")]
     .reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
-  mixTotal.textContent =
-    `Total: ${sum.toFixed(1)}%` + (Math.abs(sum - 100) > 0.05 ? " (should be 100%)" : " ✅");
+  const ok = Math.abs(sum - 100) <= 0.05;
+  mixTotal.textContent = `Total: ${sum.toFixed(1)}%` + (ok ? " ✅" : " (should be 100%)");
+  mixTotal.classList.toggle("error", !ok);
 }
 
+// Keeps values the player already typed; only adds/removes rows.
+// When a row has no value yet, the whole split is reset to an even suggestion.
 function rebuildMixInputs() {
   const idx = selectedOreIndexes();
+
+  // Remember what the player has typed so far
+  const previous = {};
+  document.querySelectorAll(".mixInput").forEach((el) => {
+    previous[el.dataset.ore] = el.value;
+  });
+
   mixInputs.innerHTML = "";
 
   if (idx.length < 2) {
-    mixSection.style.display = "none";
+    mixSection.hidden = true;
     return;
   }
+  mixSection.hidden = false;
 
-  mixSection.style.display = "block";
+  const hasNew = idx.some((i) => previous[i] === undefined);
   const even = Math.round((100 / idx.length) * 10) / 10;
 
   idx.forEach((i, n) => {
-    // last ore takes the remainder so the total is exactly 100
-    const value = n === idx.length - 1
-      ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
-      : even;
+    let value;
+    if (hasNew && Object.keys(previous).length === 0) {
+      // First time the split appears: even suggestion (last row takes the remainder)
+      value = n === idx.length - 1
+        ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
+        : even;
+    } else {
+      // Keep the player's number; brand new rows start empty
+      value = previous[i] !== undefined ? previous[i] : "";
+    }
+
     const row = document.createElement("label");
     row.className = "mix-row";
-    row.innerHTML = `${ORES[i].name}
-      <input type="number" class="mixInput" data-ore="${i}" min="0" max="100" step="0.1" value="${value}" /> %`;
+    row.innerHTML = `<span>${ORES[i].name}</span>
+      <span><input type="number" class="mixInput" data-ore="${i}" min="0" max="100" step="0.1" value="${value}" placeholder="0" /> %</span>`;
     mixInputs.appendChild(row);
   });
 
@@ -132,137 +255,73 @@ const setAllOres = (state) => {
   document.querySelectorAll(".oreCheck").forEach((c) => (c.checked = state));
   rebuildMixInputs();
 };
-
-document.getElementById("selectAllBtn").addEventListener("click", () => setAllOres(true));
-document.getElementById("clearBtn").addEventListener("click", () => setAllOres(false));
-
-/* ============ SYNC CURRENT LEVEL <-> CURRENT XP ============ */
-
-const currentLevelEl = document.getElementById("currentLevel");
-const currentXpEl = document.getElementById("currentXp");
-
-// XP -> level: update the level box to match the XP entered
-function syncLevelFromXp() {
-  const raw = currentXpEl.value.trim();
-  if (raw === "") return;
-  const xp = parseFloat(raw);
-  if (isNaN(xp) || xp < 0) return;
-  currentLevelEl.value = Math.min(levelForXp(xp), 199);
-}
-
-currentXpEl.addEventListener("input", syncLevelFromXp);
-currentXpEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    syncLevelFromXp();
-    document.getElementById("calcBtn").click(); // optional: remove to just sync
-  }
-});
-
-// Level -> XP: only clear XP if the level no longer matches it
-currentLevelEl.addEventListener("input", () => {
-  const xpRaw = currentXpEl.value.trim();
-  if (xpRaw === "") return;
-  const xp = parseFloat(xpRaw);
-  if (!isNaN(xp) && levelForXp(xp) === parseInt(currentLevelEl.value, 10)) return;
-  currentXpEl.value = "";
-});
-
-/* ============ SYNC TARGET LEVEL <-> TARGET XP ============ */
-
-const targetLevelEl = document.getElementById("targetLevel");
-const targetXpEl = document.getElementById("targetXp");
-
-// XP -> level: update the level box to match the XP entered
-function syncTargetLevelFromXp() {
-  const raw = targetXpEl.value.trim();
-  if (raw === "") return;
-
-  const xp = parseFloat(raw);
-  if (isNaN(xp) || xp < 0) return;
-
-  targetLevelEl.value = Math.min(levelForXp(xp), 200);
-}
-
-targetXpEl.addEventListener("input", syncTargetLevelFromXp);
-targetXpEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    syncTargetLevelFromXp();
-    document.getElementById("calcBtn").click(); // optional
-  }
-});
-
-// Level -> XP: only clear XP if the level no longer matches it
-targetLevelEl.addEventListener("input", () => {
-  const xpRaw = targetXpEl.value.trim();
-  if (xpRaw === "") return;
-
-  const xp = parseFloat(xpRaw);
-  const lvl = parseInt(targetLevelEl.value, 10);
-  if (!isNaN(xp) && !isNaN(lvl) && levelForXp(xp) === lvl) return;
-
-  targetXpEl.value = "";
-});
+$("selectAllBtn").addEventListener("click", () => setAllOres(true));
+$("clearBtn").addEventListener("click", () => setAllOres(false));
 
 /* ============ CALCULATE ============ */
 
-document.getElementById("calcBtn").addEventListener("click", () => {
-  const currentLevelInput = parseInt(document.getElementById("currentLevel").value, 10);
-  const currentXpInput = parseFloat(document.getElementById("currentXp").value);
-  const target = parseInt(document.getElementById("targetLevel").value, 10);
-  const targetXpInput = parseFloat(document.getElementById("targetXp").value);
-  const xpPerAction = parseFloat(document.getElementById("xpPerAction").value) || 0;
-  const out = document.getElementById("result");
+$("calcBtn").addEventListener("click", () => {
+  const currentLevelInput = parseInt(currentLevelEl.value, 10);
+  const currentXpInput = parseFloat(currentXpEl.value);
+  const target = parseInt(targetLevelEl.value, 10);
+  const targetXpInput = parseFloat(targetXpEl.value);
 
-  const usingCurrentXp = !isNaN(currentXpInput) && currentXpInput >= 0 &&
-    document.getElementById("currentXp").value.trim() !== "";
-  const usingTargetXp = !isNaN(targetXpInput) && targetXpInput > 0;
+  const showError = (msg) => {
+    resultPanel.hidden = false;
+    resultEl.innerHTML = `<p class="error">${msg}</p>`;
+  };
 
-  // Starting XP and the level it corresponds to
+  const usingCurrentXp = currentXpEl.value.trim() !== "" &&
+    !isNaN(currentXpInput) && currentXpInput >= 0;
+  const usingTargetXp = targetXpEl.value.trim() !== "" &&
+    !isNaN(targetXpInput) && targetXpInput > 0;
+
   let startXp, current;
   if (usingCurrentXp) {
     startXp = currentXpInput;
-    current = levelForXp(startXp);          // used for the "Usable?" checks
+    current = levelForXp(startXp);
   } else {
     if (!currentLevelInput || currentLevelInput < 1 || currentLevelInput > 199) {
-      out.textContent = "Enter a valid current level (1-199), or a Current XP value.";
-      return;
+      return showError("Enter a valid current level (1-199), or a Current XP value.");
     }
     current = currentLevelInput;
     startXp = totalXpForLevel(current);
   }
 
-  // Target XP
-  let targetXp;
+  let targetXp, endLevel;
   if (usingTargetXp) {
     targetXp = targetXpInput;
+    endLevel = levelForXp(targetXp);
   } else {
     if (!target || target > 200 || target < 2) {
-      out.textContent = "Enter a valid target level (2-200), or a Target XP value.";
-      return;
+      return showError("Enter a valid target level (2-200), or a Target XP value.");
     }
     targetXp = totalXpForLevel(target);
+    endLevel = target;
   }
 
   const xpNeeded = targetXp - startXp;
   if (xpNeeded <= 0) {
-    out.textContent = "Your target is not higher than your current XP.";
-    return;
+    return showError("Your target is not higher than your current XP.");
   }
 
-  let html = `<p><strong>XP needed:</strong> ${fmt(xpNeeded)}</p>`;
+  // Summary bar (start -> end)
+  let html = `
+    <div class="projected">
+      <div class="proj-end"><span class="proj-num">${current}</span><span class="proj-label">Start</span></div>
+      <div class="proj-mid">
+        <span class="proj-xp">+${fmt(xpNeeded)} XP</span>
+        <span class="proj-levels">+${endLevel - current} levels</span>
+      </div>
+      <div class="proj-end"><span class="proj-num">${endLevel}</span><span class="proj-label">End</span></div>
+    </div>`;
 
-  // Generic XP per action (original feature)
-  if (xpPerAction > 0) {
-    html += `<p><strong>Actions needed:</strong> ${fmt(Math.ceil(xpNeeded / xpPerAction))}</p>`;
-  }
-
-  // Mining: combined plan + per-ore comparison
   const selected = selectedOreIndexes().map((i) => ({ ore: ORES[i], i }));
+
   if (selected.length > 0) {
     const log = LOGS[logSelect.value];
     const title = `${log.name}${log.bonus ? ` +${log.bonus}%` : ""}`;
 
-    // Combined plan (only when 2+ ores are selected)
     if (selected.length > 1) {
       const shares = selected.map(({ i }) => {
         const el = document.querySelector(`.mixInput[data-ore="${i}"]`);
@@ -301,7 +360,6 @@ document.getElementById("calcBtn").addEventListener("click", () => {
       }
     }
 
-    // Single-ore comparison
     html += `
       <h3>If you mine only one ore (${title})</h3>
       <table>
@@ -322,7 +380,14 @@ document.getElementById("calcBtn").addEventListener("click", () => {
 
     html += `</table>
       <p class="note">Ore counts round up, so totals may overshoot your target by a few XP.</p>`;
+  } else {
+    html += `<p class="note">Select at least one ore in step 3 to see how many you need.</p>`;
   }
+
+  resultEl.innerHTML = html;
+  resultPanel.hidden = false;
+  resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
   out.innerHTML = html;
 });
