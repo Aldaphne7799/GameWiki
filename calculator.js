@@ -158,10 +158,15 @@ currentXpEl.addEventListener("keydown", (e) => {
   }
 });
 
-// Level -> XP: typing a level clears the XP box so the level takes effect
+// Level -> XP: only clear XP if the level no longer matches it
 currentLevelEl.addEventListener("input", () => {
+  const xpRaw = currentXpEl.value.trim();
+  if (xpRaw === "") return;
+  const xp = parseFloat(xpRaw);
+  if (!isNaN(xp) && levelForXp(xp) === parseInt(currentLevelEl.value, 10)) return;
   currentXpEl.value = "";
 });
+
 
 /* ============ CALCULATE ============ */
 
