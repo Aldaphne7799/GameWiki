@@ -18,9 +18,34 @@
       <input id="targetLevel" type="number" min="2" max="200" value="99" />
     </label>
 
+    <label>Target XP (optional, overrides target level)
+      <input id="targetXp" type="number" min="0" step="1" placeholder="e.g. 100000" />
+    </label>
+
     <label>XP per action (optional)
       <input id="xpPerAction" type="number" min="0" step="0.25" value="0" />
     </label>
+
+    <section id="miningSection">
+      <h2>⛏️ Mining</h2>
+
+      <label>Burning logs bonus
+        <select id="logSelect"></select>
+      </label>
+
+      <div class="ore-controls">
+        <strong>Ores to mine</strong>
+        <button type="button" id="selectAllBtn">Select all</button>
+        <button type="button" id="clearBtn">Clear</button>
+      </div>
+      <div id="oreGrid" class="ore-grid"></div>
+
+      <div id="mixSection" style="display:none;">
+        <strong>XP split between selected ores (%)</strong>
+        <div id="mixInputs" class="mix-inputs"></div>
+        <p class="note" id="mixTotal"></p>
+      </div>
+    </section>
 
     <button id="calcBtn">Calculate</button>
     <div id="result"></div>
@@ -31,3 +56,4 @@
   <script src="calculator.js"></script>
 </body>
 </html>
+
