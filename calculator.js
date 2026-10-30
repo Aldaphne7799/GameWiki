@@ -234,6 +234,10 @@ function rebuildMixInputs() {
   updateMixTotal();
 }
 
+document.querySelectorAll(".oreCheck").forEach((c) =>
+  c.addEventListener("change", rebuildMixInputs)
+);
+
   mixInputs.innerHTML = "";
 
   if (idx.length < 2) {
