@@ -167,6 +167,41 @@ currentLevelEl.addEventListener("input", () => {
   currentXpEl.value = "";
 });
 
+/* ============ SYNC TARGET LEVEL <-> TARGET XP ============ */
+
+const targetLevelEl = document.getElementById("targetLevel");
+const targetXpEl = document.getElementById("targetXp");
+
+// XP -> level: update the level box to match the XP entered
+function syncTargetLevelFromXp() {
+  const raw = targetXpEl.value.trim();
+  if (raw === "") return;
+
+  const xp = parseFloat(raw);
+  if (isNaN(xp) || xp < 0) return;
+
+  targetLevelEl.value = Math.min(levelForXp(xp), 200);
+}
+
+targetXpEl.addEventListener("input", syncTargetLevelFromXp);
+targetXpEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    syncTargetLevelFromXp();
+    document.getElementById("calcBtn").click(); // optional
+  }
+});
+
+// Level -> XP: only clear XP if the level no longer matches it
+targetLevelEl.addEventListener("input", () => {
+  const xpRaw = targetXpEl.value.trim();
+  if (xpRaw === "") return;
+
+  const xp = parseFloat(xpRaw);
+  const lvl = parseInt(targetLevelEl.value, 10);
+  if (!isNaN(xp) && !isNaN(lvl) && levelForXp(xp) === lvl) return;
+
+  targetXpEl.value = "";
+});
 
 /* ============ CALCULATE ============ */
 
