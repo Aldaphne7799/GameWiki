@@ -192,6 +192,8 @@ updateLevelHints();
 
 /* ============ MANUAL PERCENTAGE SPLIT ============ */
 
+/* ============ MANUAL PERCENTAGE SPLIT ============ */
+
 function updateMixTotal() {
   const sum = [...document.querySelectorAll(".mixInput")]
     .reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
@@ -200,8 +202,7 @@ function updateMixTotal() {
   mixTotal.classList.toggle("error", !ok);
 }
 
-// Keeps values the player already typed; only adds/removes rows.
-// When a row has no value yet, the whole split is reset to an even suggestion.
+// Even split: 100 / number of selected ores, recalculated on every selection change.
 function rebuildMixInputs() {
   const idx = selectedOreIndexes();
 
@@ -220,46 +221,6 @@ function rebuildMixInputs() {
     const value = n === idx.length - 1
       ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
       : even;
-
-    const row = document.createElement("label");
-    row.className = "mix-row";
-    row.innerHTML = `<span>${ORES[i].name}</span>
-      <span><input type="number" class="mixInput" data-ore="${i}" min="0" max="100" step="0.1" value="${value}" placeholder="0" /> %</span>`;
-    mixInputs.appendChild(row);
-  });
-
-  mixInputs.querySelectorAll(".mixInput").forEach((el) =>
-    el.addEventListener("input", updateMixTotal)
-  );
-  updateMixTotal();
-}
-
-document.querySelectorAll(".oreCheck").forEach((c) =>
-  c.addEventListener("change", rebuildMixInputs)
-);
-
-  mixInputs.innerHTML = "";
-
-  if (idx.length < 2) {
-    mixSection.hidden = true;
-    return;
-  }
-  mixSection.hidden = false;
-
-  const hasNew = idx.some((i) => previous[i] === undefined);
-  const even = Math.round((100 / idx.length) * 10) / 10;
-
-  idx.forEach((i, n) => {
-    let value;
-    if (hasNew && Object.keys(previous).length === 0) {
-      // First time the split appears: even suggestion (last row takes the remainder)
-      value = n === idx.length - 1
-        ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
-        : even;
-    } else {
-      // Keep the player's number; brand new rows start empty
-      value = previous[i] !== undefined ? previous[i] : "";
-    }
 
     const row = document.createElement("label");
     row.className = "mix-row";
