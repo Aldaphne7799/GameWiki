@@ -389,6 +389,4 @@ $("calcBtn").addEventListener("click", () => {
   resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-  out.innerHTML = html;
-});
 
