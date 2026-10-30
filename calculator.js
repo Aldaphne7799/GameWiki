@@ -126,34 +126,46 @@ document.getElementById("clearBtn").addEventListener("click", () => setAllOres(f
 /* ============ CALCULATE ============ */
 
 document.getElementById("calcBtn").addEventListener("click", () => {
-  const current = parseInt(document.getElementById("currentLevel").value, 10);
+  const currentLevelInput = parseInt(document.getElementById("currentLevel").value, 10);
+  const currentXpInput = parseFloat(document.getElementById("currentXp").value);
   const target = parseInt(document.getElementById("targetLevel").value, 10);
   const targetXpInput = parseFloat(document.getElementById("targetXp").value);
   const xpPerAction = parseFloat(document.getElementById("xpPerAction").value) || 0;
   const out = document.getElementById("result");
 
-  if (!current || current < 1 || current > 199) {
-    out.textContent = "Enter a valid current level (1-199).";
-    return;
-  }
-
-  const currentXp = totalXpForLevel(current);
+  const usingCurrentXp = !isNaN(currentXpInput) && currentXpInput >= 0 &&
+    document.getElementById("currentXp").value.trim() !== "";
   const usingTargetXp = !isNaN(targetXpInput) && targetXpInput > 0;
 
+  // Starting XP and the level it corresponds to
+  let startXp, current;
+  if (usingCurrentXp) {
+    startXp = currentXpInput;
+    current = levelForXp(startXp);          // used for the "Usable?" checks
+  } else {
+    if (!currentLevelInput || currentLevelInput < 1 || currentLevelInput > 199) {
+      out.textContent = "Enter a valid current level (1-199), or a Current XP value.";
+      return;
+    }
+    current = currentLevelInput;
+    startXp = totalXpForLevel(current);
+  }
+
+  // Target XP
   let targetXp;
   if (usingTargetXp) {
     targetXp = targetXpInput;
   } else {
-    if (!target || target > 200 || target <= current) {
-      out.textContent = "Enter valid levels (1-200), with target higher than current.";
+    if (!target || target > 200 || target < 2) {
+      out.textContent = "Enter a valid target level (2-200), or a Target XP value.";
       return;
     }
     targetXp = totalXpForLevel(target);
   }
 
-  const xpNeeded = targetXp - currentXp;
+  const xpNeeded = targetXp - startXp;
   if (xpNeeded <= 0) {
-    out.textContent = "Your target is not higher than your current level's XP.";
+    out.textContent = "Your target is not higher than your current XP.";
     return;
   }
 
