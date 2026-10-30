@@ -12,6 +12,19 @@ function totalXpForLevel(level) {
   return total;
 }
 
+// Highest level reached with a given total XP (inverse of totalXpForLevel)
+function levelForXp(xp) {
+  let level = 1;
+  let total = 0;
+  while (level < 200) {
+    const next = total + stepXp(level);
+    if (next > xp) break;
+    total = next;
+    level++;
+  }
+  return level;
+}
+
 const fmt = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 1 });
 
 /* ============ MINING DATA (verify against your spreadsheet) ============ */
