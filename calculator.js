@@ -192,8 +192,6 @@ updateLevelHints();
 
 /* ============ MANUAL PERCENTAGE SPLIT ============ */
 
-/* ============ MANUAL PERCENTAGE SPLIT ============ */
-
 function updateMixTotal() {
   const sum = [...document.querySelectorAll(".mixInput")]
     .reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
