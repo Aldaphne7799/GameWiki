@@ -1,35 +1,68 @@
 /* ===== Theme ===== */
 :root {
-  --bg: #14161a;
-  --card: #1d2026;
-  --card-2: #252932;
-  --border: #343944;
-  --text: #e6e8ec;
-  --muted: #8d94a3;
-  --accent: #4da3ff;
-  --accent-soft: rgba(77, 163, 255, 0.14);
+  --bg: #0b1030;
+  --bg-glow: #17225e;
+  --panel: rgba(22, 34, 88, 0.55);
+  --card: rgba(30, 46, 108, 0.5);
+  --card-dim: rgba(14, 22, 62, 0.55);
+  --border: rgba(90, 120, 220, 0.28);
+  --text: #e8ecff;
+  --muted: #7d8bc4;
+  --accent: #f5b82e;
+  --accent-soft: rgba(245, 184, 46, 0.14);
+  --accent-text: #1a1205;
   --ok: #4cd37b;
   --error: #ff6b6b;
-  --radius: 10px;
+  --radius: 12px;
 }
 
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
 body {
-  font-family: Arial, sans-serif;
-  background: var(--bg);
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background:
+    radial-gradient(ellipse at 50% -10%, var(--bg-glow) 0%, transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   line-height: 1.5;
+  min-height: 100vh;
+}
+
+main {
   max-width: 860px;
   margin: 0 auto;
-  padding: 50px 16px 48px;
-  text-align: left;
+  padding: 40px 16px 56px;
 }
 
 h1 {
   text-align: center;
-  margin-bottom: 1.25rem;
+  margin: 0 0 1.5rem;
+  color: var(--accent);
+  letter-spacing: 0.04em;
 }
 
-a {
+a { color: var(--accent); }
+
+/* ===== Panels & step titles ===== */
+.panel {
+  margin-bottom: 22px;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+
+.step-title {
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--accent);
 }
 
@@ -37,13 +70,17 @@ a {
 input[type="number"],
 input[type="text"],
 select {
-  background: var(--card-2);
+  width: 100%;
+  background: rgba(8, 13, 42, 0.65);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
+  border-radius: 8px;
+  padding: 10px 12px;
   font-size: 1rem;
+  font-family: inherit;
 }
+
+input::placeholder { color: var(--muted); }
 
 input:focus,
 select:focus,
@@ -52,66 +89,148 @@ button:focus-visible {
   outline-offset: 1px;
 }
 
-/* Top inputs: level / XP row */
-.top-inputs {
+/* ===== Step 1: skill tiles ===== */
+.skill-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
-  margin-bottom: 20px;
 }
 
-.top-inputs label {
+.skill-tile {
+  position: relative;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 4px;
-  font-size: 0.9rem;
+  padding: 16px 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.skill-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.skill-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.soon {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--muted);
 }
 
-/* ===== Mining card ===== */
-#miningSection {
-  margin: 1.5rem 0;
-  padding: 20px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+.skill-tile:hover:not(:disabled) {
+  border-color: var(--accent);
+  transform: translateY(-2px);
 }
 
-#miningSection h2 {
-  margin-top: 0;
+.skill-tile.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 16px rgba(245, 184, 46, 0.25);
+}
+
+.skill-tile.selected .skill-name { color: var(--accent); }
+
+.skill-tile.disabled,
+.skill-tile:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== Step 2: level cards ===== */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.level-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.level-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.level-sub {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* Big centered level number */
+.level-card input[type="number"]:first-of-type {
+  background: transparent;
+  border-color: transparent;
   text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  padding: 2px 0 6px;
+}
+
+/* Target level in gold */
+.level-card:nth-child(2) input[type="number"]:first-of-type {
+  color: var(--accent);
+}
+
+/* ===== Step 3: logs ===== */
+.log-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
 /* ===== Buttons ===== */
 button {
-  background: var(--card-2);
+  background: var(--card);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 7px 14px;
-  font-size: 0.95rem;
+  font-family: inherit;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: border-color 0.15s, filter 0.15s;
 }
 
-button:hover {
-  border-color: var(--accent);
-}
+button:hover:not(:disabled) { border-color: var(--accent); }
 
-#calcBtn,
-button[type="submit"] {
+#calcBtn {
+  display: block;
+  margin: 8px auto 0;
   background: var(--accent);
   border-color: var(--accent);
-  color: #0b1220;
-  font-weight: 600;
-  padding: 10px 28px;
+  color: var(--accent-text);
+  font-weight: 700;
+  padding: 11px 32px;
+  letter-spacing: 0.03em;
 }
 
-#calcBtn:hover,
-button[type="submit"]:hover {
-  filter: brightness(1.1);
-}
+#calcBtn:hover { filter: brightness(1.1); }
 
 /* ===== Ore picker ===== */
 .ore-controls {
@@ -119,49 +238,92 @@ button[type="submit"]:hover {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 16px 0 8px;
+  margin: 8px 0 10px;
 }
+
+.ore-controls button { padding: 5px 12px; font-size: 0.82rem; }
 
 .ore-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .ore-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--card-2);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  padding: 12px 40px 12px 14px;
+  background: var(--card-dim);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
+  color: var(--muted);
   cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.ore-name {
   font-size: 0.92rem;
+  font-weight: 600;
   color: var(--text);
-  transition: border-color 0.15s, background 0.15s;
 }
 
-.ore-item:hover {
-  border-color: var(--accent);
+.ore-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
 }
 
-.ore-item:has(input:checked) {
+.ore-item:hover { border-color: var(--accent); }
+
+/* Selected: amber tint, gold border, check badge */
+.ore-item:has(.oreCheck:checked) {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
 
-.ore-item input {
-  accent-color: var(--accent);
+.ore-item:has(.oreCheck:checked)::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* Hint for ores above your current level (visual only, not a lock) */
+.ore-item.above-level:not(:has(.oreCheck:checked)) {
+  opacity: 0.5;
+}
+
+.ore-item.above-level .ore-meta::after {
+  content: " · 🔒";
+}
+
+/* Native checkbox hidden; the whole card is the control */
+.oreCheck {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ===== XP split ===== */
+#mixSection { margin-bottom: 18px; }
+
 .mix-inputs {
   display: grid;
   gap: 8px;
   margin: 10px auto;
-  max-width: 320px;
+  max-width: 340px;
 }
 
 .mix-row {
@@ -169,6 +331,7 @@ button[type="submit"]:hover {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  font-size: 0.9rem;
 }
 
 .mix-row input {
@@ -177,40 +340,100 @@ button[type="submit"]:hover {
 }
 
 /* ===== Messages ===== */
-.note {
-  color: var(--muted);
-  font-size: 0.9em;
-}
-
-.error {
-  color: var(--error);
-}
-
-.ok {
-  color: var(--ok);
-}
+.note  { color: var(--muted); font-size: 0.9em; }
+.error { color: var(--error); }
+.ok    { color: var(--ok); }
 
 /* ===== Results ===== */
-#result {
-  margin-top: 20px;
-  text-align: center;
+#result { text-align: center; }
+
+#result h3 {
+  margin: 22px 0 8px;
+  font-size: 0.95rem;
+  color: var(--accent);
 }
 
-#result h3,
-#result h4 {
-  margin: 20px 0 8px;
+/* Projected summary bar: start -> end */
+.projected {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
 }
 
+.proj-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.proj-num {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.proj-end:last-child .proj-num { color: var(--accent); }
+
+.proj-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.proj-mid {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 0;
+}
+
+/* The gold connecting line sits behind the text */
+.proj-mid::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  transform: translateY(-50%);
+}
+
+.proj-xp,
+.proj-levels {
+  position: relative;
+  z-index: 1;
+  padding: 0 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  /* Mask the line behind the text */
+  background: #14204f;
+}
+
+.proj-xp     { color: var(--accent); margin-bottom: 6px; }
+.proj-levels { color: var(--ok);     margin-top: 6px; }
+
+/* Tables (rows are direct children, no thead/tbody in your markup) */
 #result table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  margin: 10px 0 18px;
-  background: var(--card-2);
+  margin: 10px 0 14px;
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
-  font-size: 0.93rem;
+  font-size: 0.9rem;
 }
 
 #result th,
@@ -224,37 +447,42 @@ button[type="submit"]:hover {
   background: rgba(255, 255, 255, 0.04);
   color: var(--muted);
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 #result th:first-child,
-#result td:first-child {
-  text-align: left;
-}
+#result td:first-child { text-align: left; }
 
-#result tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.025);
-}
+#result tr:nth-child(even) td { background: rgba(255, 255, 255, 0.025); }
+#result tr:hover td           { background: var(--accent-soft); }
+#result tr:last-child td      { border-bottom: none; }
+#result th:hover              { background: rgba(255, 255, 255, 0.04); }
 
-#result tbody tr:hover {
-  background: var(--accent-soft);
-}
-
-#result tr:last-child td {
-  border-bottom: none;
-}
+/* ===== Back link ===== */
+.back { text-align: center; margin-top: 8px; }
 
 /* ===== Small screens ===== */
 @media (max-width: 560px) {
-  #miningSection {
-    padding: 14px;
+  main { padding-top: 28px; }
+  .panel { padding: 14px; }
+
+  .level-grid { grid-template-columns: 1fr; }
+  .skill-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .skill-icon { font-size: 1.8rem; }
+
+  .projected { gap: 10px; padding: 12px; }
+  .proj-num { font-size: 1.5rem; }
+
+  /* Wide tables scroll sideways instead of squashing */
+  #result table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 
   #result th,
-  #result td {
-    padding: 7px 8px;
-    font-size: 0.85rem;
-  }
+  #result td { padding: 7px 8px; font-size: 0.82rem; }
 }
+
