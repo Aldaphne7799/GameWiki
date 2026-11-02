@@ -30,7 +30,7 @@
 
         <div class="level-card">
           <span class="level-label">Target level</span>
-          <input id="targetLevel" type="number" min="2" max="200" placeholder="e.g. 99"/>
+          <input id="targetLevel" type="number" min="2" max="200" placeholder="e.g. 99" />
           <span class="level-sub">Target XP (optional)</span>
           <input id="targetXp" type="number" min="0" step="1" placeholder="Enter your exact XP..." />
         </div>
@@ -39,27 +39,15 @@
 
     <!-- STEP 3 -->
     <section class="panel" id="step3" hidden>
-      <h2 class="step-title">3. Choose a task</h2>
+      <h2 class="step-title" id="step3Title">3. Choose a task</h2>
 
+      <!-- Global: applies to every skill -->
       <label class="log-row">Burning logs bonus
         <select id="logSelect"></select>
       </label>
 
-      <div class="ore-controls">
-        <strong>Ores to mine</strong>
-        <div>
-          <button type="button" id="selectAllBtn">Select all</button>
-          <button type="button" id="clearBtn">Clear</button>
-        </div>
-      </div>
-
-      <div id="oreGrid" class="ore-grid"></div>
-
-      <div id="mixSection" hidden>
-        <strong>XP split between selected ores (%)</strong>
-        <div id="mixInputs" class="mix-inputs"></div>
-        <p class="note" id="mixTotal"></p>
-      </div>
+      <!-- Skill-specific: each skill module renders its own controls here -->
+      <div id="skillTask"></div>
 
       <button id="calcBtn" type="button">Calculate</button>
     </section>
@@ -73,10 +61,9 @@
     <p class="back"><a href="index.html">← Back</a></p>
   </main>
 
-  <script src="calculator.js"></script>
+  <script type="module" src="calculator.js"></script>
 </body>
 </html>
-
 
  
 
