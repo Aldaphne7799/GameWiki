@@ -80,10 +80,15 @@ function applyToCalculator(level, xp) {
   const lvlEl = document.getElementById('currentLevel');
   const xpEl  = document.getElementById('currentXp');
   if (!lvlEl || !xpEl) throw new Error('Calculator fields not found.');
-  xpEl.value = xp;
-  xpEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+  // Order matters: calculator.js links level <-> XP, and a level "input" event
+  // resets the XP field to the floor of that level. Set the level first, then
+  // write the real XP afterwards so it isn't overwritten.
   lvlEl.value = level;
   lvlEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+  xpEl.value = xp;
+  xpEl.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 async function runLookup() {
@@ -122,6 +127,11 @@ form?.addEventListener('submit', e => {
   runLookup();
   input.blur();        // dismiss keyboard so results are visible on phones
 });
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') runLookup();
+});
+
 
 
 input.addEventListener('keydown', e => {
