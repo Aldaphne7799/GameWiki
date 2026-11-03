@@ -1,6 +1,7 @@
 import { totalXpForLevel, levelForXp, fmt } from "./xp.js";
 import { LOGS } from "./logs.js";
 import { SKILLS } from "./skills/index.js";
+import { openLookup } from "./lookup.js";
 
 /* ============ ELEMENTS ============ */
 
@@ -58,6 +59,10 @@ function selectSkill(id) {
 
   step2.hidden = false;
   step3.hidden = false;
+
+  // Show the character lookup for this skill (must come after step2 is visible
+  // so the name box can receive focus)
+  openLookup(skill.id, skill.name);
 }
 
 /* ============ SYNC LEVEL <-> XP (both directions, both pairs) ============ */
@@ -177,7 +182,7 @@ $("calcBtn").addEventListener("click", () => {
     </div>`;
 
   const log = LOGS[parseInt(logSelect.value, 10) || 0];
- const skillHtml = activeSkill.calculate({ xpNeeded, currentLevel: current, startXp, log });
+  const skillHtml = activeSkill.calculate({ xpNeeded, currentLevel: current, startXp, log });
 
   resultEl.innerHTML = summary + skillHtml;
   resultPanel.hidden = false;
