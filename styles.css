@@ -613,5 +613,46 @@ button:hover:not(:disabled) { border-color: var(--accent); }
   outline-offset: 3px;
 }
 
+/* Crafting skill dropdown groups */
+[data-skill="crafting"] .group {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+[data-skill="crafting"] .group[hidden] { display: none; }
+
+[data-skill="crafting"] .group > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  background: rgba(128, 128, 128, 0.12);
+  list-style: none;
+}
+
+[data-skill="crafting"] .group > summary::-webkit-details-marker { display: none; }
+
+[data-skill="crafting"] .group > summary::before {
+  content: "▸";
+  transition: transform 0.15s;
+}
+
+[data-skill="crafting"] .group[open] > summary::before { transform: rotate(90deg); }
+
+[data-skill="crafting"] .group-count { font-weight: 400; opacity: 0.7; }
+
+[data-skill="crafting"] .group-actions { margin-left: auto; display: flex; gap: 6px; }
+
+[data-skill="crafting"] .group-actions button {
+  font-size: 0.8em;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+[data-skill="crafting"] .group .ore-grid { padding: 10px 12px; }
 
 
