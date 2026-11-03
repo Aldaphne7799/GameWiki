@@ -20,6 +20,13 @@
     <section class="panel" id="step2" hidden>
       <h2 class="step-title">2. Set your levels</h2>
 
+      <!-- Character lookup -->
+      <div id="lookupBar" class="lookup-bar">
+        <label for="playerName" id="lookupLabel">Character name</label>
+        <input type="text" id="playerName" placeholder="Enter character name, press Enter" autocomplete="off" />
+        <p id="lookupStatus" class="lookup-status"></p>
+      </div>
+
       <div class="level-grid">
         <div class="level-card">
           <span class="level-label">Current level</span>
@@ -64,6 +71,7 @@
   <script type="module" src="calculator.js"></script>
 </body>
 </html>
+
 
  
 
