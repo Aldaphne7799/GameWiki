@@ -39,7 +39,7 @@ const MAX_LEVEL = 200;
 // Persists across re-renders (the calculator only re-renders on skill switch).
 const state = { spot: "river", rod: "verdite" };
 let lastLevel = 1;
-let mounted = null; // { spotSelect, rodSelect }
+let mounted = null; // { spotSelect, rodSelect, hint }
 
 /* ============ PURE MATH ============ */
 
@@ -115,6 +115,26 @@ function simulate({ startXp, xpNeeded, currentLevel, rod, spot, bonus }) {
   return { totalCatches, catchesByFish, levelBreakdown, xpGained, endLevel: level, stalledAt };
 }
 
+/**
+ * Largest-remainder rounding: rounds values to integers so they sum exactly
+ * to Math.ceil(sum of values). Returns an array in the same order as input.
+ */
+function roundToTotal(values) {
+  const target = Math.ceil(values.reduce((a, b) => a + b, 0) - 1e-9);
+  const floors = values.map(Math.floor);
+  let remaining = target - floors.reduce((a, b) => a + b, 0);
+  const order = values
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  const out = [...floors];
+  for (const { i } of order) {
+    if (remaining <= 0) break;
+    out[i] += 1;
+    remaining -= 1;
+  }
+  return out;
+}
+
 /* ============ UI HELPERS ============ */
 
 const spotLabel = (id) => SPOTS.find((s) => s.id === id)?.label ?? id;
@@ -124,15 +144,32 @@ function spotHasAnyFish(spot, level) {
   return FISH.some((f) => f.spot === spot && level >= f.lvl);
 }
 
-function rodHasAnyFish(rod, level, spot) {
-  return eligibleFish(level, rod, spot).length > 0;
+// A rod unlocks at the level of the lowest-level fish that needs it.
+// Rods with no fish (e.g. tyrian) never unlock.
+function rodUnlockLevel(rod) {
+  const levels = FISH.filter((f) => f.rod === rod).map((f) => f.lvl);
+  return levels.length ? Math.min(...levels) : Infinity;
+}
+
+function rodUnlocked(rod, level) {
+  return level >= rodUnlockLevel(rod);
+}
+
+function updateHint() {
+  if (!mounted) return;
+  const canCatch = eligibleFish(lastLevel, state.rod, state.spot).length > 0;
+  mounted.hint.textContent = canCatch
+    ? ""
+    : `Heads up: a ${rodLabel(state.rod)} can't catch anything at the ` +
+      `${spotLabel(state.spot)} at level ${lastLevel}.`;
+  mounted.hint.hidden = canCatch;
 }
 
 function refreshDisabledStates() {
   if (!mounted) return;
   const { spotSelect, rodSelect } = mounted;
 
-  // Spots first (they don't depend on the rod).
+  // Spots: grey out the ones with no fish at your level.
   for (const opt of spotSelect.options) {
     const usable = spotHasAnyFish(opt.value, lastLevel);
     opt.disabled = !usable;
@@ -147,20 +184,29 @@ function refreshDisabledStates() {
     }
   }
 
-  // Then rods (they depend on the spot).
+  // Rods: grey out only the ones you don't have the level for.
   for (const opt of rodSelect.options) {
-    const usable = rodHasAnyFish(opt.value, lastLevel, state.spot);
-    opt.disabled = !usable;
-    opt.classList.toggle("above-level", !usable);
+    const unlockAt = rodUnlockLevel(opt.value);
+    const unlocked = lastLevel >= unlockAt;
+    const rod = RODS.find((r) => r.id === opt.value);
+    opt.disabled = !unlocked;
+    opt.classList.toggle("above-level", !unlocked);
+    opt.textContent = unlocked
+      ? rod.label
+      : unlockAt === Infinity
+        ? `${rod.label} (no fish yet)`
+        : `${rod.label} (L${unlockAt})`;
   }
-  // If the chosen rod can't catch anything here, pick the best usable one.
-  if (!rodHasAnyFish(state.rod, lastLevel, state.spot)) {
-    const usableRods = RODS.filter((r) => rodHasAnyFish(r.id, lastLevel, state.spot));
-    if (usableRods.length) {
-      state.rod = usableRods[usableRods.length - 1].id;
+  // If the chosen rod got locked, fall back to the best unlocked one.
+  if (!rodUnlocked(state.rod, lastLevel)) {
+    const unlockedRods = RODS.filter((r) => rodUnlocked(r.id, lastLevel));
+    if (unlockedRods.length) {
+      state.rod = unlockedRods[unlockedRods.length - 1].id;
       rodSelect.value = state.rod;
     }
   }
+
+  updateHint();
 }
 
 function buildSelect(id, labelText, options, selected) {
@@ -220,6 +266,14 @@ function renderRodComparison({ startXp, xpNeeded, currentLevel, spot, bonus, cho
     <p class="note">★ = fewest catches. Rods that can't finish the climb at this spot are hidden.</p>`;
 }
 
+function addChances(acc, chances, weightBy) {
+  const out = { ...acc };
+  for (const [name, c] of Object.entries(chances)) {
+    out[name] = (out[name] || 0) + c * weightBy;
+  }
+  return out;
+}
+
 function renderLevelBreakdown(levelBreakdown) {
   // Group consecutive levels with the same fish mix to keep the table short.
   const groups = [];
@@ -241,15 +295,17 @@ function renderLevelBreakdown(levelBreakdown) {
     }
   }
 
+  const rounded = roundToTotal(groups.map((g) => g.catches));
+
   const body = groups
-    .map((g) => {
+    .map((g, i) => {
       const mix = Object.entries(g.chanceSum)
         .map(([name, c]) => ({ name, share: c / g.catches }))
         .sort((a, b) => b.share - a.share)
         .map((m) => `${m.name} ${(m.share * 100).toFixed(0)}%`)
         .join(", ");
       const range = g.startLevel === g.endLevel ? `${g.startLevel}` : `${g.startLevel}–${g.endLevel}`;
-      return `<tr><td>${range}</td><td>${fmt(Math.ceil(g.catches))}</td><td>${mix}</td></tr>`;
+      return `<tr><td>${range}</td><td>${fmt(rounded[i])}</td><td>${mix}</td></tr>`;
     })
     .join("");
 
@@ -259,14 +315,6 @@ function renderLevelBreakdown(levelBreakdown) {
       <thead><tr><th>Levels</th><th>Catches</th><th>Average mix</th></tr></thead>
       <tbody>${body}</tbody>
     </table>`;
-}
-
-function addChances(acc, chances, weightBy) {
-  const out = { ...acc };
-  for (const [name, c] of Object.entries(chances)) {
-    out[name] = (out[name] || 0) + c * weightBy;
-  }
-  return out;
 }
 
 /* ============ SKILL DEFINITION ============ */
@@ -302,11 +350,16 @@ export const fishing = {
     note.className = "note";
     note.textContent =
       "Your rod decides which fish can bite. Better rods unlock higher-XP fish earlier, " +
-      "so the same climb takes fewer catches. Greyed-out options can't catch anything at your current level.";
+      "so the same climb takes fewer catches. Rods are greyed out until you reach the " +
+      "level of the first fish they unlock.";
 
-    container.append(actions, note);
+    const hint = document.createElement("p");
+    hint.className = "note error";
+    hint.hidden = true;
 
-    mounted = { spotSelect: spotUi.select, rodSelect: rodUi.select };
+    container.append(actions, note, hint);
+
+    mounted = { spotSelect: spotUi.select, rodSelect: rodUi.select, hint };
     refreshDisabledStates();
   },
 
@@ -336,14 +389,17 @@ export const fishing = {
       );
     }
 
-    const fishRows = Object.entries(sim.catchesByFish)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, count]) => {
+    // Sort fish by expected catches, then round so the column sums to the headline total.
+    const fishEntries = Object.entries(sim.catchesByFish).sort((a, b) => b[1] - a[1]);
+    const roundedCatches = roundToTotal(fishEntries.map(([, count]) => count));
+
+    const fishRows = fishEntries
+      .map(([name, count], i) => {
         const fish = FISH.find((f) => f.name === name);
         const share = (count / sim.totalCatches) * 100;
         return `<tr>
           <td>${name}</td>
-          <td>${fmt(Math.ceil(count))}</td>
+          <td>${fmt(roundedCatches[i])}</td>
           <td>${share.toFixed(1)}%</td>
           <td>${fmt(xpWithBonus(fish.xp, bonus))}</td>
         </tr>`;
@@ -373,3 +429,4 @@ export const fishing = {
     `;
   },
 };
+
