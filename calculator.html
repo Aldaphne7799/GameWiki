@@ -16,16 +16,28 @@
       <div id="skillGrid" class="skill-grid"></div>
     </section>
 
-    <!-- STEP 2 -->
+        <!-- STEP 2 -->
     <section class="panel" id="step2" hidden>
       <h2 class="step-title">2. Set your levels</h2>
 
-      <!-- Character lookup -->
-      <div id="lookupBar" class="lookup-bar">
+      <!-- Character lookup (a real <form> so mobile keyboards' Go/Search key works) -->
+      <form id="lookupForm" class="lookup-bar" autocomplete="off">
         <label for="playerName" id="lookupLabel">Character name</label>
-        <input type="text" id="playerName" placeholder="Enter character name, press Enter" autocomplete="off" />
-        <p id="lookupStatus" class="lookup-status"></p>
-      </div>
+        <div class="lookup-row" id="lookupBar">
+          <input
+            type="text"
+            id="playerName"
+            placeholder="Enter character name"
+            enterkeyhint="search"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            inputmode="text"
+          />
+          <button type="submit" id="lookupBtn">Look up</button>
+        </div>
+        <p id="lookupStatus" class="lookup-status" aria-live="polite"></p>
+      </form>
 
       <div class="level-grid">
         <div class="level-card">
