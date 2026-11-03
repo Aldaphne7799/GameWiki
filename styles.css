@@ -483,9 +483,8 @@ button:hover:not(:disabled) { border-color: var(--accent); }
 /* ===== Character lookup ===== */
 .lookup-bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 14px;
   padding: 12px 14px;
   background: var(--card);
@@ -500,14 +499,38 @@ button:hover:not(:disabled) { border-color: var(--accent); }
   color: var(--muted);
 }
 
-.lookup-bar input[type="text"] {
+.lookup-row {
+  display: flex;
+  gap: 8px;
+}
+
+.lookup-row input[type="text"] {
   flex: 1;
-  min-width: 180px;
-  width: auto;
+  min-width: 0;        /* lets the input shrink on narrow screens */
+  width: auto;         /* overrides the global width: 100% */
+  font-size: 16px;     /* 16px+ stops iOS Safari from zooming on focus */
+}
+
+.lookup-row button {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.lookup-row button:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.lookup-row button:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .lookup-status {
-  flex-basis: 100%;
   margin: 0;
   font-size: 0.8rem;
   color: var(--muted);
