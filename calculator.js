@@ -177,7 +177,7 @@ $("calcBtn").addEventListener("click", () => {
     </div>`;
 
   const log = LOGS[parseInt(logSelect.value, 10) || 0];
-  const skillHtml = activeSkill.calculate({ xpNeeded, currentLevel: current, log });
+ const skillHtml = activeSkill.calculate({ xpNeeded, currentLevel: current, startXp, log });
 
   resultEl.innerHTML = summary + skillHtml;
   resultPanel.hidden = false;
