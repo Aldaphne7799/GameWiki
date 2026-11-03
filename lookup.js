@@ -1,38 +1,74 @@
-const FEED_URL = 'https://play.aldermere.online/hiscores/hiscores.json';
-const CACHE_MS = 60_000;
-let cache = null, cacheTime = 0;
-let lookupSkillId = null;
+// lookup.js: fetches the hiscores feed and fills the calculator for a character.
 
+const FEED_URL = 'https://play.aldermere.online/hiscores/hiscores.json';
+// If the browser reports a CORS error, switch to the proxy instead:
+// const FEED_URL = '/api/hiscores';
+
+const CACHE_MS = 60_000;
+
+let cache = null;        // { feed, index }
+let cacheTime = 0;
+let lookupSkillId = null;
+let busy = false;
+
+const form   = document.getElementById('lookupForm');
 const input  = document.getElementById('playerName');
 const status = document.getElementById('lookupStatus');
 const label  = document.getElementById('lookupLabel');
+const button = document.getElementById('lookupBtn');
 
-async function getFeed() {
-  if (cache && Date.now() - cacheTime < CACHE_MS) return cache;
-  const res = await fetch(FEED_URL);
-  if (!res.ok) throw new Error(`Couldn't load highscores (${res.status}).`);
-  cache = await res.json();
-  cacheTime = Date.now();
-  return cache;
+const ready = Boolean(form && input && status && label);
+if (!ready) {
+  console.warn('lookup.js: lookup bar elements not found; lookup disabled.');
 }
 
-function findPlayer(feed, name) {
-  const target = name.trim().toLowerCase();
-  const list = Array.isArray(feed) ? feed
-             : Array.isArray(feed.players) ? feed.players
-             : null;
-  if (list) return list.find(p => String(p.name).toLowerCase() === target);
-  const key = Object.keys(feed).find(k => k.toLowerCase() === target);
-  return key ? feed[key] : undefined;
+// Surface otherwise-invisible errors on phones (no DevTools).
+if (ready) {
+  window.addEventListener('error', e => setStatus(`JS error: ${e.message}`, true));
+  window.addEventListener('unhandledrejection', e =>
+    setStatus(`Error: ${e.reason?.message || e.reason}`, true)
+  );
+}
+
+function toPlayerList(feed) {
+  if (Array.isArray(feed)) return feed;
+  if (Array.isArray(feed?.players)) return feed.players;
+  // Object keyed by name: { "Alice": {...}, "Bob": {...} }
+  return Object.entries(feed).map(([name, p]) => ({ name, ...p }));
+}
+
+function buildIndex(feed) {
+  const map = new Map();
+  for (const p of toPlayerList(feed)) {
+    if (p?.name != null) map.set(String(p.name).toLowerCase(), p);
+  }
+  return map;
+}
+
+async function getIndex() {
+  if (cache && Date.now() - cacheTime < CACHE_MS) return cache.index;
+  try {
+    const res = await fetch(FEED_URL);
+    if (!res.ok) throw new Error(`Couldn't load highscores (${res.status}).`);
+    const feed = await res.json();
+    cache = { feed, index: buildIndex(feed) };
+    cacheTime = Date.now();
+  } catch (err) {
+    if (cache) return cache.index; // fall back to stale data
+    throw err;
+  }
+  return cache.index;
 }
 
 function setStatus(msg, isError = false) {
+  if (!status) return;
   status.textContent = msg;
   status.classList.toggle('error', isError);
 }
 
-// Called from calculator.js whenever a skill tile is clicked
+// Called from calculator.js whenever a skill tile is clicked.
 export function openLookup(skillId, skillName) {
+  if (!ready) return;
   lookupSkillId = skillId;
   label.textContent = `Character name (${skillName || skillId})`;
   setStatus('');
@@ -43,33 +79,50 @@ export function openLookup(skillId, skillName) {
 function applyToCalculator(level, xp) {
   const lvlEl = document.getElementById('currentLevel');
   const xpEl  = document.getElementById('currentXp');
-  // Set XP and fire "input" so your existing sync + hint handlers run
+  if (!lvlEl || !xpEl) throw new Error('Calculator fields not found.');
   xpEl.value = xp;
   xpEl.dispatchEvent(new Event('input', { bubbles: true }));
-  // Set level afterwards so the exact hiscores level is shown
   lvlEl.value = level;
   lvlEl.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 async function runLookup() {
   const name = input.value.trim();
-  if (!name || !lookupSkillId) return;
+  if (!name || !lookupSkillId || busy) return;
+
+  busy = true;
+  if (button) button.disabled = true;
   setStatus('Loading…');
   try {
-    const feed = await getFeed();
-    const player = findPlayer(feed, name);
+    const index = await getIndex();
+    const player = index.get(name.toLowerCase());
     if (!player) throw new Error(`No player found named "${name}".`);
 
     const entry = player.skills?.[lookupSkillId];
-    if (!entry) throw new Error(`No ${lookupSkillId} data for ${player.name}.`);
-    const [level, xp] = entry;
+    if (!Array.isArray(entry)) {
+      throw new Error(`No ${lookupSkillId} data for ${player.name}.`);
+    }
 
+    const [level, xp] = entry;
     applyToCalculator(level, xp);
-    setStatus(`${player.name}: ${lookupSkillId} level ${level}, ${xp.toLocaleString()} XP`);
+    setStatus(
+      `${player.name}: ${lookupSkillId} level ${level}, ${Number(xp).toLocaleString()} XP`
+    );
   } catch (err) {
-    setStatus(err.message, true);
+    setStatus(err.message || 'Lookup failed.', true);
+  } finally {
+    busy = false;
+    if (button) button.disabled = false;
   }
 }
+
+// A real <form> submit works with every mobile keyboard's Go/Search key.
+form?.addEventListener('submit', e => {
+  e.preventDefault();  // stop page reload
+  runLookup();
+  input.blur();        // dismiss keyboard so results are visible on phones
+});
+
 
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter') runLookup();
