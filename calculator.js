@@ -84,14 +84,19 @@ function linkLevelAndXp(levelEl, xpEl, maxLevel) {
   });
 
   levelEl.addEventListener("input", () => {
-    if (syncing) return;
-    const lvl = parseInt(levelEl.value, 10);
-    if (isNaN(lvl) || lvl < 1 || lvl > maxLevel) return;
-    syncing = true;
-    xpEl.value = totalXpForLevel(lvl);
-    syncing = false;
-  });
-}
+  if (syncing) return;
+  const lvl = parseInt(levelEl.value, 10);
+  if (isNaN(lvl) || lvl < 1 || lvl > maxLevel) return;
+
+  // Keep existing XP if it already falls within this level
+  const xp = parseFloat(xpEl.value);
+  if (!isNaN(xp) && levelForXp(xp) === lvl) return;
+
+  syncing = true;
+  xpEl.value = totalXpForLevel(lvl);
+  syncing = false;
+});
+
 
 linkLevelAndXp(currentLevelEl, currentXpEl, 199);
 linkLevelAndXp(targetLevelEl, targetXpEl, 200);
