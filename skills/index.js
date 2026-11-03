@@ -1,4 +1,5 @@
 import { mining } from "./mining.js";
+import { fishing } from "./fishing.js";
 
 const stub = (id, name, icon) => ({
   id,
@@ -17,12 +18,12 @@ const stub = (id, name, icon) => ({
 
 export const SKILLS = [
   mining,
+  fishing,
   stub("smithing",    "Smithing",    "🔨"),
   stub("woodcutting", "Woodcutting", "🪓"),
   stub("fletching",   "Fletching",   "🏹"),
   stub("crafting",    "Crafting",    "🧵"),
   stub("alchemy",     "Alchemy",     "⚗️"),
-  stub("fishing",     "Fishing",     "🎣"),
   stub("cooking",     "Cooking",     "🍳"),
   stub("firemaking",  "Firemaking",  "🔥"),
   stub("farming",     "Farming",     "🌾"),
