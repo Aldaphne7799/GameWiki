@@ -96,7 +96,7 @@ function linkLevelAndXp(levelEl, xpEl, maxLevel) {
   xpEl.value = totalXpForLevel(lvl);
   syncing = false;
 });
-
+} 
 
 linkLevelAndXp(currentLevelEl, currentXpEl, 199);
 linkLevelAndXp(targetLevelEl, targetXpEl, 200);
