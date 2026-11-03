@@ -69,6 +69,9 @@ function catchChances(level, rod, spot) {
 /**
  * Simulates the climb level by level for one (rod, spot) combination.
  * Returns expected catches overall, per fish, and per level.
+ *
+ * Note: each levelBreakdown entry's `level` is the level you are AT while
+ * earning that XP (so the entry for level 60 is the XP that takes you 60 -> 61).
  */
 function simulate({ startXp, xpNeeded, currentLevel, rod, spot, bonus }) {
   const catchesByFish = {};
@@ -304,7 +307,9 @@ function renderLevelBreakdown(levelBreakdown) {
         .sort((a, b) => b.share - a.share)
         .map((m) => `${m.name} ${(m.share * 100).toFixed(0)}%`)
         .join(", ");
-      const range = g.startLevel === g.endLevel ? `${g.startLevel}` : `${g.startLevel}–${g.endLevel}`;
+      // Show where each stretch takes you (e.g. "58 → 61"), so the last row's
+      // end matches the headline's end level.
+      const range = `${g.startLevel} → ${g.endLevel + 1}`;
       return `<tr><td>${range}</td><td>${fmt(rounded[i])}</td><td>${mix}</td></tr>`;
     })
     .join("");
@@ -312,7 +317,7 @@ function renderLevelBreakdown(levelBreakdown) {
   return `
     <h3>Catch mix by level range</h3>
     <table>
-      <thead><tr><th>Levels</th><th>Catches</th><th>Average mix</th></tr></thead>
+      <thead><tr><th>Level progress</th><th>Catches</th><th>Average mix</th></tr></thead>
       <tbody>${body}</tbody>
     </table>`;
 }
@@ -425,7 +430,9 @@ export const fishing = {
       ${renderRodComparison({ startXp: begin, xpNeeded, currentLevel, spot, bonus, chosenRod: rod })}
 
       <p class="note">Figures are expected values; real results vary with luck.
-        The mix shifts as you level. Catch rate per hour isn't modelled.</p>
+        The mix shifts as you level. Catch rate per hour isn't modelled.
+        Level ranges show where each stretch takes you (e.g. 58 → 61 means
+        you finish levels 58, 59 and 60).</p>
     `;
   },
 };
