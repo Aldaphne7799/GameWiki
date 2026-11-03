@@ -1,0 +1,375 @@
+import { fmt, totalXpForLevel, stepXp } from "../xp.js";
+import { xpWithBonus } from "../logs.js";
+
+/* ============ DATA ============ */
+
+const FISH = [
+  { name: "Shrimp",     lvl: 1,  xp: 10,  rod: "bronze",  spot: "shrimp" },
+  { name: "Trout",      lvl: 11, xp: 46,  rod: "iron",    spot: "river" },
+  { name: "Salmon",     lvl: 21, xp: 79,  rod: "steel",   spot: "river" },
+  { name: "Sturgeon",   lvl: 31, xp: 116, rod: "mithril", spot: "river" },
+  { name: "Barn. bass", lvl: 41, xp: 155, rod: "ebony",   spot: "sea" },
+  { name: "Stormjaw",   lvl: 51, xp: 196, rod: "ebony",   spot: "sea" },
+  { name: "Vesperfin",  lvl: 61, xp: 240, rod: "verdite", spot: "river" },
+  { name: "Cinderpike", lvl: 71, xp: 280, rod: "verdite", spot: "river" },
+];
+
+const ROD_TIERS = { bronze: 0, iron: 1, steel: 2, mithril: 3, ebony: 4, verdite: 5, tyrian: 6 };
+
+const SPOTS = [
+  { id: "shrimp", label: "Shrimp spot" },
+  { id: "river",  label: "River" },
+  { id: "sea",    label: "Sea" },
+];
+
+const RODS = [
+  { id: "bronze",  label: "Bronze rod" },
+  { id: "iron",    label: "Iron rod" },
+  { id: "steel",   label: "Steel rod" },
+  { id: "mithril", label: "Mithril rod" },
+  { id: "ebony",   label: "Ebony rod" },
+  { id: "verdite", label: "Verdite rod" },
+  { id: "tyrian",  label: "Tyrian rod" },
+];
+
+const MAX_LEVEL = 200;
+
+/* ============ STATE ============ */
+
+// Persists across re-renders (the calculator only re-renders on skill switch).
+const state = { spot: "river", rod: "verdite" };
+let lastLevel = 1;
+let mounted = null; // { spotSelect, rodSelect }
+
+/* ============ PURE MATH ============ */
+
+function weight(p) {
+  let w = Math.pow(3, Math.min(p, 6) / 6);
+  if (p > 10) w *= Math.pow(0.5, (p - 10) / 10);
+  return w;
+}
+
+function eligibleFish(level, rod, spot) {
+  const rodTier = ROD_TIERS[rod];
+  return FISH.filter(
+    (f) => f.spot === spot && level >= f.lvl && ROD_TIERS[f.rod] <= rodTier
+  );
+}
+
+function catchChances(level, rod, spot) {
+  const eligible = eligibleFish(level, rod, spot).map((f) => ({
+    name: f.name,
+    w: weight(level - f.lvl),
+  }));
+  const total = eligible.reduce((sum, f) => sum + f.w, 0);
+  if (total === 0) return {};
+  return Object.fromEntries(eligible.map((f) => [f.name, f.w / total]));
+}
+
+/**
+ * Simulates the climb level by level for one (rod, spot) combination.
+ * Returns expected catches overall, per fish, and per level.
+ */
+function simulate({ startXp, xpNeeded, currentLevel, rod, spot, bonus }) {
+  const catchesByFish = {};
+  const levelBreakdown = []; // { level, catches, chances }
+  let totalCatches = 0;
+  let xpGained = 0;
+  let level = currentLevel;
+  let xpIntoLevel = startXp - totalXpForLevel(level);
+  let stalledAt = null;
+
+  while (xpGained < xpNeeded && level < MAX_LEVEL) {
+    const chances = catchChances(level, rod, spot);
+    const entries = Object.entries(chances);
+    if (entries.length === 0) {
+      stalledAt = level;
+      break;
+    }
+
+    let expectedXp = 0;
+    for (const [name, chance] of entries) {
+      const fish = FISH.find((f) => f.name === name);
+      expectedXp += chance * xpWithBonus(fish.xp, bonus);
+    }
+
+    const remainingInLevel = stepXp(level) - xpIntoLevel;
+    const xpThisStep = Math.min(remainingInLevel, xpNeeded - xpGained);
+    const catches = xpThisStep / expectedXp;
+
+    totalCatches += catches;
+    xpGained += xpThisStep;
+    for (const [name, chance] of entries) {
+      catchesByFish[name] = (catchesByFish[name] || 0) + catches * chance;
+    }
+    levelBreakdown.push({ level, catches, chances });
+
+    if (xpThisStep >= remainingInLevel) {
+      level += 1;
+      xpIntoLevel = 0;
+    } else {
+      xpIntoLevel += xpThisStep;
+    }
+  }
+
+  return { totalCatches, catchesByFish, levelBreakdown, xpGained, endLevel: level, stalledAt };
+}
+
+/* ============ UI HELPERS ============ */
+
+const spotLabel = (id) => SPOTS.find((s) => s.id === id)?.label ?? id;
+const rodLabel = (id) => RODS.find((r) => r.id === id)?.label ?? id;
+
+function spotHasAnyFish(spot, level) {
+  return FISH.some((f) => f.spot === spot && level >= f.lvl);
+}
+
+function rodHasAnyFish(rod, level, spot) {
+  return eligibleFish(level, rod, spot).length > 0;
+}
+
+function refreshDisabledStates() {
+  if (!mounted) return;
+  const { spotSelect, rodSelect } = mounted;
+
+  // Spots first (they don't depend on the rod).
+  for (const opt of spotSelect.options) {
+    const usable = spotHasAnyFish(opt.value, lastLevel);
+    opt.disabled = !usable;
+    opt.classList.toggle("above-level", !usable);
+  }
+  // If the chosen spot became unusable, switch to the first usable one.
+  if (!spotHasAnyFish(state.spot, lastLevel)) {
+    const fallback = SPOTS.find((s) => spotHasAnyFish(s.id, lastLevel));
+    if (fallback) {
+      state.spot = fallback.id;
+      spotSelect.value = fallback.id;
+    }
+  }
+
+  // Then rods (they depend on the spot).
+  for (const opt of rodSelect.options) {
+    const usable = rodHasAnyFish(opt.value, lastLevel, state.spot);
+    opt.disabled = !usable;
+    opt.classList.toggle("above-level", !usable);
+  }
+  // If the chosen rod can't catch anything here, pick the best usable one.
+  if (!rodHasAnyFish(state.rod, lastLevel, state.spot)) {
+    const usableRods = RODS.filter((r) => rodHasAnyFish(r.id, lastLevel, state.spot));
+    if (usableRods.length) {
+      state.rod = usableRods[usableRods.length - 1].id;
+      rodSelect.value = state.rod;
+    }
+  }
+}
+
+function buildSelect(id, labelText, options, selected) {
+  const wrap = document.createElement("label");
+  wrap.textContent = labelText + " ";
+  const select = document.createElement("select");
+  select.id = id;
+  for (const o of options) {
+    const opt = document.createElement("option");
+    opt.value = o.id;
+    opt.textContent = o.label;
+    if (o.id === selected) opt.selected = true;
+    select.appendChild(opt);
+  }
+  wrap.appendChild(select);
+  return { wrap, select };
+}
+
+/* ============ RESULT RENDERING ============ */
+
+function renderRodComparison({ startXp, xpNeeded, currentLevel, spot, bonus, chosenRod }) {
+  const rows = RODS.map((r) => {
+    const sim = simulate({ startXp, xpNeeded, currentLevel, rod: r.id, spot, bonus });
+    return { rod: r, sim };
+  });
+
+  const completable = rows.filter((r) => r.sim.stalledAt === null && r.sim.totalCatches > 0);
+  if (completable.length <= 1) return "";
+
+  const best = Math.min(...completable.map((r) => r.sim.totalCatches));
+  const chosen = completable.find((r) => r.rod.id === chosenRod);
+
+  const body = completable
+    .map(({ rod, sim }) => {
+      const isChosen = rod.id === chosenRod;
+      const saved = chosen ? chosen.sim.totalCatches - sim.totalCatches : 0;
+      let delta = "";
+      if (!isChosen && Math.abs(saved) >= 1) {
+        delta = saved > 0
+          ? `${fmt(Math.round(saved))} fewer`
+          : `${fmt(Math.round(-saved))} more`;
+      }
+      return `<tr${isChosen ? ' style="font-weight:bold"' : ""}>
+        <td>${rod.label}${isChosen ? " (selected)" : ""}${sim.totalCatches === best ? " ★" : ""}</td>
+        <td>${fmt(Math.ceil(sim.totalCatches))}</td>
+        <td>${delta || "-"}</td>
+      </tr>`;
+    })
+    .join("");
+
+  return `
+    <h3>Rod comparison</h3>
+    <table>
+      <thead><tr><th>Rod</th><th>Expected catches</th><th>vs. selected</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+    <p class="note">★ = fewest catches. Rods that can't finish the climb at this spot are hidden.</p>`;
+}
+
+function renderLevelBreakdown(levelBreakdown) {
+  // Group consecutive levels with the same fish mix to keep the table short.
+  const groups = [];
+  for (const row of levelBreakdown) {
+    const key = Object.keys(row.chances).join("|");
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.endLevel = row.level;
+      last.catches += row.catches;
+      last.chanceSum = addChances(last.chanceSum, row.chances, row.catches);
+    } else {
+      groups.push({
+        key,
+        startLevel: row.level,
+        endLevel: row.level,
+        catches: row.catches,
+        chanceSum: addChances({}, row.chances, row.catches),
+      });
+    }
+  }
+
+  const body = groups
+    .map((g) => {
+      const mix = Object.entries(g.chanceSum)
+        .map(([name, c]) => ({ name, share: c / g.catches }))
+        .sort((a, b) => b.share - a.share)
+        .map((m) => `${m.name} ${(m.share * 100).toFixed(0)}%`)
+        .join(", ");
+      const range = g.startLevel === g.endLevel ? `${g.startLevel}` : `${g.startLevel}–${g.endLevel}`;
+      return `<tr><td>${range}</td><td>${fmt(Math.ceil(g.catches))}</td><td>${mix}</td></tr>`;
+    })
+    .join("");
+
+  return `
+    <h3>Catch mix by level range</h3>
+    <table>
+      <thead><tr><th>Levels</th><th>Catches</th><th>Average mix</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
+function addChances(acc, chances, weightBy) {
+  const out = { ...acc };
+  for (const [name, c] of Object.entries(chances)) {
+    out[name] = (out[name] || 0) + c * weightBy;
+  }
+  return out;
+}
+
+/* ============ SKILL DEFINITION ============ */
+
+export const fishing = {
+  id: "fishing",
+  name: "Fishing",
+  icon: "🎣",
+  active: true,
+  taskTitle: "Choose a fishing spot and rod",
+
+  renderTask(container) {
+    container.innerHTML = "";
+
+    const actions = document.createElement("div");
+    actions.className = "ore-actions";
+
+    const spotUi = buildSelect("fishingSpot", "Spot:", SPOTS, state.spot);
+    const rodUi = buildSelect("fishingRod", "Rod:", RODS, state.rod);
+
+    spotUi.select.addEventListener("change", () => {
+      state.spot = spotUi.select.value;
+      refreshDisabledStates();
+    });
+    rodUi.select.addEventListener("change", () => {
+      state.rod = rodUi.select.value;
+      refreshDisabledStates();
+    });
+
+    actions.append(spotUi.wrap, rodUi.wrap);
+
+    const note = document.createElement("p");
+    note.className = "note";
+    note.textContent =
+      "Your rod decides which fish can bite. Better rods unlock higher-XP fish earlier, " +
+      "so the same climb takes fewer catches. Greyed-out options can't catch anything at your current level.";
+
+    container.append(actions, note);
+
+    mounted = { spotSelect: spotUi.select, rodSelect: rodUi.select };
+    refreshDisabledStates();
+  },
+
+  onLevelChange(level) {
+    lastLevel = level;
+    refreshDisabledStates();
+  },
+
+  calculate({ xpNeeded, currentLevel, startXp, log }) {
+    const bonus = log?.bonus ?? 0;
+    const { spot, rod } = state;
+    const begin = Number.isFinite(startXp) ? startXp : totalXpForLevel(currentLevel);
+
+    if (eligibleFish(currentLevel, rod, spot).length === 0) {
+      return (
+        `<p class="error">Nothing is catchable at the ${spotLabel(spot)} with a ` +
+        `${rodLabel(rod)} at level ${currentLevel}. Try a different spot or a better rod.</p>`
+      );
+    }
+
+    const sim = simulate({ startXp: begin, xpNeeded, currentLevel, rod, spot, bonus });
+
+    if (sim.stalledAt !== null) {
+      return (
+        `<p class="error">Progress stalls at level ${sim.stalledAt}: nothing is catchable ` +
+        `at the ${spotLabel(spot)} with a ${rodLabel(rod)}.</p>`
+      );
+    }
+
+    const fishRows = Object.entries(sim.catchesByFish)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => {
+        const fish = FISH.find((f) => f.name === name);
+        const share = (count / sim.totalCatches) * 100;
+        return `<tr>
+          <td>${name}</td>
+          <td>${fmt(Math.ceil(count))}</td>
+          <td>${share.toFixed(1)}%</td>
+          <td>${fmt(xpWithBonus(fish.xp, bonus))}</td>
+        </tr>`;
+      })
+      .join("");
+
+    const reachedCap = sim.endLevel >= MAX_LEVEL && sim.xpGained < xpNeeded;
+
+    return `
+      <h3>Fishing: ${spotLabel(spot)} with ${rodLabel(rod)}</h3>
+      <p><strong>About ${fmt(Math.ceil(sim.totalCatches))} catches</strong>
+        to gain ${fmt(Math.round(sim.xpGained))} XP
+        (level ${currentLevel} → ${sim.endLevel}).</p>
+      ${reachedCap ? `<p class="note">Level cap (${MAX_LEVEL}) reached before the full target.</p>` : ""}
+
+      <h3>Total catches by fish</h3>
+      <table>
+        <thead><tr><th>Fish</th><th>Expected catches</th><th>Share</th><th>XP each</th></tr></thead>
+        <tbody>${fishRows}</tbody>
+      </table>
+
+      ${renderLevelBreakdown(sim.levelBreakdown)}
+      ${renderRodComparison({ startXp: begin, xpNeeded, currentLevel, spot, bonus, chosenRod: rod })}
+
+      <p class="note">Figures are expected values; real results vary with luck.
+        The mix shifts as you level. Catch rate per hour isn't modelled.</p>
+    `;
+  },
+};
