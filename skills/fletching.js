@@ -8,6 +8,8 @@ import { xpWithBonus } from "../logs.js";
 // Recipes are generated per tier by recipeFor(). A material whose name matches
 // another entry in ITEMS (stock, unstrung bow, shaft batch) is an intermediate:
 // the plan's own output is consumed first, and only the shortfall expands to raws.
+// Crossbow Prods, Arrowtips, Feathers and Bowstrings are not in ITEMS, so they
+// are treated as raw materials you supply yourself.
 
 // Wood tier pairs with the metal tier of the same level.
 const TIERS = {
@@ -125,6 +127,11 @@ function addRawMats(totals, produced, matName, qty) {
 }
 
 // `planItems` = [{ item, count }] for the whole plan. Returns raw material totals.
+//
+// Why this doesn't double count: every planned item's own ingredients are expanded
+// exactly once here (the loop below). When a consumer needs an intermediate that is
+// also in the plan, addRawMats takes it from `produced` instead of expanding it again.
+// Only the shortfall (intermediates you did NOT plan enough of) expands to raws.
 function planRawMats(planItems) {
   const totals = {};
   const produced = {};
@@ -153,7 +160,8 @@ function matsTable(totals, heading) {
           <td>${mat}</td>
           <td>${fmt(qty)}</td>
           <td><input type="number" class="haveInput" min="0" step="1"
-                     data-need="${qty}" placeholder="0" /></td>
+                     data-need="${qty}" placeholder="0"
+                     aria-label="Amount of ${mat} you have" /></td>
           <td class="remaining">${fmt(qty)}</td>
         </tr>`).join("")}
     </table>`;
@@ -175,14 +183,27 @@ export function wireMatsInputs(resultsRoot) {
 
 // ---------- UI ----------
 
-// Module-level reference to the container we render into
+// Module-level state for the single rendered instance
 let root = null;
+let lastLevel = null;
+
+// Percentages the user has typed, keyed by item index. Preserved across rebuilds
+// so ticking another item doesn't wipe a tuned split.
+const savedShares = new Map();
 
 const q = (sel) => root.querySelector(sel);
 const qa = (sel) => [...root.querySelectorAll(sel)];
 
 const selectedIndexes = () =>
   qa(".itemCheck:checked").map((c) => parseInt(c.value, 10));
+
+// "xp" = split by XP percentage, "equal" = same craft count for every item (game style)
+const splitMode = () => q('input[name="splitMode"]:checked')?.value ?? "xp";
+
+function updateSelectedCount() {
+  const el = q(".selectedCount");
+  if (el) el.textContent = `${selectedIndexes().length} selected`;
+}
 
 function updateMixTotal() {
   const mixTotal = q(".mixTotal");
@@ -192,27 +213,45 @@ function updateMixTotal() {
   mixTotal.classList.toggle("error", !ok);
 }
 
-// Even split: 100 / number of selected items, recalculated on every selection change.
+// Even split: 100 / number of selected items. If the user has already typed values for
+// every currently selected item and they still add up to 100, keep them instead.
 function rebuildMixInputs() {
+  updateSelectedCount();
+
   const mixSection = q(".mixSection");
   const mixInputs = q(".mixInputs");
   const idx = selectedIndexes();
 
+  // Remember whatever is currently typed before wiping the rows
+  qa(".mixInput").forEach((el) => {
+    savedShares.set(parseInt(el.dataset.item, 10), parseFloat(el.value) || 0);
+  });
+
   mixInputs.innerHTML = "";
 
-  if (idx.length < 2) {
+  // Equal-crafts mode needs no percentages
+  if (idx.length < 2 || splitMode() === "equal") {
     mixSection.hidden = true;
     return;
   }
   mixSection.hidden = false;
 
+  const hasAllSaved = idx.every((i) => savedShares.has(i));
+  const savedSum = idx.reduce((s, i) => s + (savedShares.get(i) || 0), 0);
+  const keepSaved = hasAllSaved && Math.abs(savedSum - 100) <= 0.05;
+
   // Even split; last row takes the rounding remainder
   const even = Math.round((100 / idx.length) * 10) / 10;
 
   idx.forEach((i, n) => {
-    const value = n === idx.length - 1
-      ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
-      : even;
+    let value;
+    if (keepSaved) {
+      value = savedShares.get(i);
+    } else {
+      value = n === idx.length - 1
+        ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
+        : even;
+    }
 
     const row = document.createElement("label");
     row.className = "mix-row";
@@ -242,6 +281,134 @@ function applyFilter() {
   });
 }
 
+function applyLevelHint(level) {
+  qa(".item-row").forEach((label) => {
+    const item = ITEMS[parseInt(label.dataset.index, 10)];
+    label.classList.toggle("above-level", level < item.level);
+  });
+}
+
+// ---------- Result builders ----------
+
+function usableCell(currentLevel, item) {
+  return currentLevel >= item.level ? "✅" : "❌ Lv " + item.level;
+}
+
+// Same craft count N for every selected item (matches the in-game combo plan).
+// N is the smallest whole number where combined XP reaches the target.
+function equalPlanHtml(selected, xpNeeded, currentLevel, log, title) {
+  const xpPerRound = selected.reduce(
+    (s, { item }) => s + xpWithBonus(item.xp, log.bonus), 0);
+  const N = Math.ceil(xpNeeded / xpPerRound);
+
+  const planItems = [];
+  let html = `
+    <h3>Combined plan (${title}), equal crafts</h3>
+    <table>
+      <tr><th>Item</th><th>XP each</th><th>Crafts needed</th><th>XP from item</th><th>Usable?</th></tr>`;
+
+  selected.forEach(({ item }) => {
+    const xpEach = xpWithBonus(item.xp, log.bonus);
+    planItems.push({ item, count: N });
+    html += `
+      <tr>
+        <td>${item.name}</td>
+        <td>${fmt(xpEach)}</td>
+        <td>${fmt(N)}</td>
+        <td>${fmt(xpEach * N)}</td>
+        <td>${usableCell(currentLevel, item)}</td>
+      </tr>`;
+  });
+
+  html += `
+      <tr><td colspan="2"><strong>Total crafts</strong></td>
+      <td><strong>${fmt(N * selected.length)}</strong></td><td></td><td></td></tr>
+    </table>`;
+
+  html += matsTable(planRawMats(planItems), "Materials needed (combined plan)");
+  return html;
+}
+
+// Each item gets a chosen percentage of the XP; craft counts differ per item.
+function sharePlanHtml(selected, xpNeeded, currentLevel, log, title) {
+  const shares = selected.map(({ i }) => {
+    const el = q(`.mixInput[data-item="${i}"]`);
+    return parseFloat(el?.value) || 0;
+  });
+  const shareSum = shares.reduce((a, b) => a + b, 0);
+
+  if (Math.abs(shareSum - 100) > 0.05) {
+    return `<p class="error" role="alert">The XP split must add up to 100% (currently ${shareSum.toFixed(1)}%).</p>`;
+  }
+
+  let totalItems = 0;
+  const planItems = [];
+
+  let html = `
+    <h3>Combined plan (${title})</h3>
+    <table>
+      <tr><th>Item</th><th>Share</th><th>XP from item</th><th>XP each</th><th>Crafts needed</th><th>Usable?</th></tr>`;
+
+  selected.forEach(({ item }, n) => {
+    const xpEach = xpWithBonus(item.xp, log.bonus);
+    const xpShare = xpNeeded * (shares[n] / 100);
+    const count = shares[n] > 0 ? Math.ceil(xpShare / xpEach) : 0;
+    totalItems += count;
+    planItems.push({ item, count });
+    html += `
+      <tr>
+        <td>${item.name}</td>
+        <td>${shares[n]}%</td>
+        <td>${fmt(xpShare)}</td>
+        <td>${fmt(xpEach)}</td>
+        <td>${fmt(count)}</td>
+        <td>${usableCell(currentLevel, item)}</td>
+      </tr>`;
+  });
+
+  html += `
+      <tr><td colspan="4"><strong>Total crafts</strong></td><td><strong>${fmt(totalItems)}</strong></td><td></td></tr>
+    </table>`;
+
+  html += matsTable(planRawMats(planItems), "Materials needed (combined plan)");
+  return html;
+}
+
+function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
+  let html = `
+    <h3>If you craft only one item (${title})</h3>
+    <table>
+      <tr><th>Item</th><th>Req. Lv</th><th>Base XP</th><th>XP w/ logs</th><th>Crafts needed</th><th>Usable?</th></tr>`;
+
+  selected.forEach(({ item }) => {
+    const xpEach = xpWithBonus(item.xp, log.bonus);
+    html += `
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.level}</td>
+        <td>${fmt(item.xp)}</td>
+        <td>${fmt(xpEach)}</td>
+        <td>${fmt(Math.ceil(xpNeeded / xpEach))}</td>
+        <td>${usableCell(currentLevel, item)}</td>
+      </tr>`;
+  });
+
+  html += `</table>`;
+
+  // With exactly one item selected there is no combined plan,
+  // so show that item's materials here instead.
+  if (selected.length === 1) {
+    const { item } = selected[0];
+    const xpEach = xpWithBonus(item.xp, log.bonus);
+    const count = Math.ceil(xpNeeded / xpEach);
+    html += matsTable(planRawMats([{ item, count }]), `Materials needed (${item.name})`);
+  }
+
+  return html;
+}
+
+// ---------- Skill definition ----------
+
 export const fletching = {
   id: "fletching",
   name: "Fletching",
@@ -251,13 +418,21 @@ export const fletching = {
 
   renderTask(container) {
     root = container;
+    savedShares.clear();
+
     root.innerHTML = `
       <div class="ore-actions">
-        <input type="search" class="itemFilter" placeholder="Filter items (e.g. maple, crossbow, arrow)..." />
+        <input type="search" class="itemFilter" aria-label="Filter items"
+               placeholder="Filter items (e.g. maple, crossbow, arrow)..." />
         <button type="button" class="selectAllBtn">Select all</button>
         <button type="button" class="clearBtn">Clear</button>
+        <span class="selectedCount">0 selected</span>
       </div>
       <div class="ore-grid"></div>
+      <div class="modeRow">
+        <label><input type="radio" name="splitMode" value="xp" checked /> Split by XP %</label>
+        <label><input type="radio" name="splitMode" value="equal" /> Equal crafts (like the game)</label>
+      </div>
       <div class="mixSection" hidden>
         <h3>XP split</h3>
         <div class="mixInputs"></div>
@@ -277,21 +452,23 @@ export const fletching = {
     });
 
     qa(".itemCheck").forEach((c) => c.addEventListener("change", rebuildMixInputs));
+    qa('input[name="splitMode"]').forEach((r) => r.addEventListener("change", rebuildMixInputs));
     q(".itemFilter").addEventListener("input", applyFilter);
     q(".selectAllBtn").addEventListener("click", () => setVisibleItems(true));
     q(".clearBtn").addEventListener("click", () => setVisibleItems(false));
+
+    // Apply the level hint right away if the level is already known
+    if (lastLevel !== null) applyLevelHint(lastLevel);
   },
 
   // Visual hint (not a lock) for items above the current level
   onLevelChange(level) {
+    lastLevel = level;
     if (!root) return;
-    qa(".item-row").forEach((label) => {
-      const item = ITEMS[parseInt(label.dataset.index, 10)];
-      label.classList.toggle("above-level", level < item.level);
-    });
+    applyLevelHint(level);
   },
 
-  // Returns an HTML string for the results panel.
+    // Returns an HTML string for the results panel.
   // After inserting it into the page, call wireMatsInputs(resultsElement).
   calculate({ xpNeeded, currentLevel, log }) {
     const selected = selectedIndexes().map((i) => ({ item: ITEMS[i], i }));
@@ -305,81 +482,18 @@ export const fletching = {
 
     // ----- Combined plan (2+ items) -----
     if (selected.length > 1) {
-      const shares = selected.map(({ i }) => {
-        const el = q(`.mixInput[data-item="${i}"]`);
-        return parseFloat(el.value) || 0;
-      });
-      const shareSum = shares.reduce((a, b) => a + b, 0);
-
-      if (Math.abs(shareSum - 100) > 0.05) {
-        html += `<p class="error">The XP split must add up to 100% (currently ${shareSum.toFixed(1)}%).</p>`;
-      } else {
-        let totalItems = 0;
-        const planItems = [];
-
-        html += `
-          <h3>Combined plan (${title})</h3>
-          <table>
-            <tr><th>Item</th><th>Share</th><th>XP from item</th><th>XP each</th><th>Crafts needed</th><th>Usable?</th></tr>`;
-
-        selected.forEach(({ item }, n) => {
-          const xpEach = xpWithBonus(item.xp, log.bonus);
-          const xpShare = xpNeeded * (shares[n] / 100);
-          const count = shares[n] > 0 ? Math.ceil(xpShare / xpEach) : 0;
-          totalItems += count;
-          planItems.push({ item, count });
-          html += `
-            <tr>
-              <td>${item.name}</td>
-              <td>${shares[n]}%</td>
-              <td>${fmt(xpShare)}</td>
-              <td>${fmt(xpEach)}</td>
-              <td>${fmt(count)}</td>
-              <td>${currentLevel >= item.level ? "✅" : "❌ Lv " + item.level}</td>
-            </tr>`;
-        });
-
-        html += `
-            <tr><td colspan="4"><strong>Total crafts</strong></td><td><strong>${fmt(totalItems)}</strong></td><td></td></tr>
-          </table>`;
-
-        html += matsTable(planRawMats(planItems), "Materials needed (combined plan)");
-      }
+      html += splitMode() === "equal"
+        ? equalPlanHtml(selected, xpNeeded, currentLevel, log, title)
+        : sharePlanHtml(selected, xpNeeded, currentLevel, log, title);
     }
 
     // ----- Single-item breakdown -----
-    html += `
-      <h3>If you craft only one item (${title})</h3>
-      <table>
-        <tr><th>Item</th><th>Req. Lv</th><th>Base XP</th><th>XP w/ logs</th><th>Crafts needed</th><th>Usable?</th></tr>`;
-
-    selected.forEach(({ item }) => {
-      const xpEach = xpWithBonus(item.xp, log.bonus);
-      html += `
-        <tr>
-          <td>${item.name}</td>
-          <td>${item.level}</td>
-          <td>${fmt(item.xp)}</td>
-          <td>${fmt(xpEach)}</td>
-          <td>${fmt(Math.ceil(xpNeeded / xpEach))}</td>
-          <td>${currentLevel >= item.level ? "✅" : "❌ Lv " + item.level}</td>
-        </tr>`;
-    });
-
-    html += `</table>`;
-
-    // With exactly one item selected there is no combined plan,
-    // so show that item's materials here instead.
-    if (selected.length === 1) {
-      const { item } = selected[0];
-      const xpEach = xpWithBonus(item.xp, log.bonus);
-      const count = Math.ceil(xpNeeded / xpEach);
-      html += matsTable(planRawMats([{ item, count }]), `Materials needed (${item.name})`);
-    }
+    html += singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title);
 
     html += `
-      <p class="note">Craft counts round up, so totals may overshoot your target by a few XP.
-      Items marked "20 x" are batches: one craft produces 20 and the XP shown is per batch.</p>`;
+      <p class="note">Craft counts round up, so totals can overshoot your target by up to
+      one craft's worth of XP per item. Items marked "20 x" are batches: one craft
+      produces 20 and the XP shown is per batch.</p>`;
 
     return html;
   },
