@@ -3,8 +3,24 @@ import { xpWithBonus } from "../logs.js";
 
 // Names, levels and XP are transcribed directly from the screenshot.
 // Items prefixed "20 x" are stackable batches (e.g. 20 arrow shafts): the XP shown
-// is for the whole batch, so the "ores needed" style count is "items needed".
-const ITEMS = [
+// is for the whole batch, so counts are "crafts" (batches), not single items.
+//
+// Recipes are generated per tier by recipeFor(). A material whose name matches
+// another entry in ITEMS (stock, unstrung bow, shaft batch) is an intermediate:
+// the plan's own output is consumed first, and only the shortfall expands to raws.
+
+// Wood tier pairs with the metal tier of the same level.
+const TIERS = {
+  1:  { wood: "Birch",     metal: "Bronze" },
+  11: { wood: "Oak",       metal: "Iron" },
+  21: { wood: "Willow",    metal: "Steel" },
+  31: { wood: "Swampwood", metal: "Mithril" },
+  41: { wood: "Maple",     metal: "Ebony" },
+  61: { wood: "Pine",      metal: "Verdite" },
+  81: { wood: "Moonwood",  metal: "Tyrian" },
+};
+
+const BASE_ITEMS = [
   { name: "20 x Birch Arrow Shaft",       level: 1,  xp: 10   },
   { name: "Birch Bow",                    level: 1,  xp: 10   },
   { name: "Bronze Crossbow",              level: 1,  xp: 20   },
@@ -48,6 +64,116 @@ const ITEMS = [
   { name: "20 x Tyrian Arrow",            level: 81, xp: 399  },
   { name: "Moonwood Crossbow Stock",      level: 81, xp: 640  },
 ];
+
+// Direct ingredients PER CRAFT, built from the tier + item name.
+function recipeFor(item) {
+  const { wood, metal } = TIERS[item.level];
+  const n = item.name;
+
+  if (n.endsWith("Arrow Shaft"))    return { [`${wood} Logs`]: 1 };   // 1 log per batch of 20
+  if (n.startsWith("Unstrung"))     return { [`${wood} Logs`]: 1 };   // 1 log
+  if (n.endsWith("Crossbow Stock")) return { [`${wood} Logs`]: 2 };   // 2 logs
+
+  // Crossbow = stock + limbs + string
+  if (n.endsWith("Crossbow")) {
+    return {
+      [`${wood} Crossbow Stock`]: 1,
+      [`${metal} Crossbow Limbs`]: 1,
+      "Bowstring": 1,
+    };
+  }
+
+  // Arrow batch = 1 batch of shafts + 20 tips + 20 feathers
+  if (n.endsWith("Arrow")) {
+    return {
+      [`20 x ${wood} Arrow Shaft`]: 1,
+      [`${metal} Arrowtips`]: 20,
+      "Feather": 20,
+    };
+  }
+
+  // Strung bow = unstrung bow + string
+  if (n.endsWith("Bow")) {
+    return { [`Unstrung ${wood} Bow`]: 1, "Bowstring": 1 };
+  }
+
+  return {};
+}
+
+const ITEMS = BASE_ITEMS.map((it) => ({ ...it, mats: recipeFor(it) }));
+const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
+
+// ---------- Materials calculation ----------
+
+// Expand `matName` x `qty`. Intermediates the plan already produces (in `produced`)
+// are consumed first; only the shortfall is expanded into raw materials.
+function addRawMats(totals, produced, matName, qty) {
+  const sub = ITEM_BY_NAME[matName];
+  if (sub && Object.keys(sub.mats).length) {
+    const available = produced[matName] || 0;
+    const used = Math.min(available, qty);
+    produced[matName] = available - used;
+    const shortfall = qty - used;
+    if (shortfall > 0) {
+      for (const [m, perCraft] of Object.entries(sub.mats)) {
+        addRawMats(totals, produced, m, perCraft * shortfall);
+      }
+    }
+  } else {
+    totals[matName] = (totals[matName] || 0) + qty;
+  }
+}
+
+// `planItems` = [{ item, count }] for the whole plan. Returns raw material totals.
+function planRawMats(planItems) {
+  const totals = {};
+  const produced = {};
+  planItems.forEach(({ item, count }) => {
+    produced[item.name] = (produced[item.name] || 0) + count;
+  });
+
+  planItems.forEach(({ item, count }) => {
+    if (!count) return;
+    for (const [m, perCraft] of Object.entries(item.mats)) {
+      addRawMats(totals, produced, m, perCraft * count);
+    }
+  });
+  return totals;
+}
+
+function matsTable(totals, heading) {
+  const rows = Object.entries(totals).sort((a, b) => a[0].localeCompare(b[0]));
+  if (rows.length === 0) return "";
+  return `
+    <h3>${heading}</h3>
+    <table class="matsTable">
+      <tr><th>Material</th><th>Needed</th><th>You have</th><th>Still need</th></tr>
+      ${rows.map(([mat, qty]) => `
+        <tr>
+          <td>${mat}</td>
+          <td>${fmt(qty)}</td>
+          <td><input type="number" class="haveInput" min="0" step="1"
+                     data-need="${qty}" placeholder="0" /></td>
+          <td class="remaining">${fmt(qty)}</td>
+        </tr>`).join("")}
+    </table>`;
+}
+
+// Call once after the results HTML has been inserted into the page
+export function wireMatsInputs(resultsRoot) {
+  resultsRoot.querySelectorAll(".haveInput").forEach((input) => {
+    input.addEventListener("input", () => {
+      const need = parseFloat(input.dataset.need) || 0;
+      const have = parseFloat(input.value) || 0;
+      const left = Math.max(0, need - have);
+      const cell = input.closest("tr").querySelector(".remaining");
+      cell.textContent = fmt(left);
+      cell.classList.toggle("done", left === 0);
+    });
+  });
+}
+
+// ---------- UI ----------
 
 // Module-level reference to the container we render into
 let root = null;
@@ -165,7 +291,8 @@ export const fletching = {
     });
   },
 
-  // Returns an HTML string for the results panel
+  // Returns an HTML string for the results panel.
+  // After inserting it into the page, call wireMatsInputs(resultsElement).
   calculate({ xpNeeded, currentLevel, log }) {
     const selected = selectedIndexes().map((i) => ({ item: ITEMS[i], i }));
 
@@ -176,6 +303,7 @@ export const fletching = {
     const title = `${log.name}${log.bonus ? ` +${log.bonus}%` : ""}`;
     let html = "";
 
+    // ----- Combined plan (2+ items) -----
     if (selected.length > 1) {
       const shares = selected.map(({ i }) => {
         const el = q(`.mixInput[data-item="${i}"]`);
@@ -187,6 +315,8 @@ export const fletching = {
         html += `<p class="error">The XP split must add up to 100% (currently ${shareSum.toFixed(1)}%).</p>`;
       } else {
         let totalItems = 0;
+        const planItems = [];
+
         html += `
           <h3>Combined plan (${title})</h3>
           <table>
@@ -197,6 +327,7 @@ export const fletching = {
           const xpShare = xpNeeded * (shares[n] / 100);
           const count = shares[n] > 0 ? Math.ceil(xpShare / xpEach) : 0;
           totalItems += count;
+          planItems.push({ item, count });
           html += `
             <tr>
               <td>${item.name}</td>
@@ -211,9 +342,12 @@ export const fletching = {
         html += `
             <tr><td colspan="4"><strong>Total crafts</strong></td><td><strong>${fmt(totalItems)}</strong></td><td></td></tr>
           </table>`;
+
+        html += matsTable(planRawMats(planItems), "Materials needed (combined plan)");
       }
     }
 
+    // ----- Single-item breakdown -----
     html += `
       <h3>If you craft only one item (${title})</h3>
       <table>
@@ -232,11 +366,21 @@ export const fletching = {
         </tr>`;
     });
 
-    html += `</table>
+    html += `</table>`;
+
+    // With exactly one item selected there is no combined plan,
+    // so show that item's materials here instead.
+    if (selected.length === 1) {
+      const { item } = selected[0];
+      const xpEach = xpWithBonus(item.xp, log.bonus);
+      const count = Math.ceil(xpNeeded / xpEach);
+      html += matsTable(planRawMats([{ item, count }]), `Materials needed (${item.name})`);
+    }
+
+    html += `
       <p class="note">Craft counts round up, so totals may overshoot your target by a few XP.
       Items marked "20 x" are batches: one craft produces 20 and the XP shown is per batch.</p>`;
 
     return html;
   },
 };
-
