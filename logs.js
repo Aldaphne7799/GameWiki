@@ -9,7 +9,7 @@ export const LOGS = [
   { name: "Moonwood",  bonus: 3.5 },
 ];
 
-// base × (1 + bonus%), rounded to nearest 0.1 (so 10.05 -> 10.1)
+// base × (1 + bonus%)
 export function xpWithBonus(baseXp, bonusPercent) {
   const raw = baseXp * (1 + bonusPercent / 100);
   return Math.round(raw * 10 + 1e-9) / 10;
