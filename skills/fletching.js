@@ -74,11 +74,11 @@ function recipeFor(item) {
   if (n.startsWith("Unstrung"))     return { [`${wood} Logs`]: 1 };   // 1 log
   if (n.endsWith("Crossbow Stock")) return { [`${wood} Logs`]: 2 };   // 2 logs
 
-  // Crossbow = stock + limbs + string
+  // Crossbow = stock + prod + string
   if (n.endsWith("Crossbow")) {
     return {
       [`${wood} Crossbow Stock`]: 1,
-      [`${metal} Crossbow Limbs`]: 1,
+      [`${metal} Crossbow Prod`]: 1,
       "Bowstring": 1,
     };
   }
