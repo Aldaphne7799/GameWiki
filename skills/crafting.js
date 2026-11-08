@@ -443,7 +443,7 @@ function renderGroups() {
     const indexes = [];
     ITEMS.forEach((item, i) => {
       if (item.type !== activeType) return;
-      if (item.level < grp.min || item.level > grp.max) return;
+      if (item.level < grp.min || item.level >= grp.max) return;
       indexes.push(i);
     });
 
