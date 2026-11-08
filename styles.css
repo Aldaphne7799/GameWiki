@@ -744,3 +744,8 @@ button:hover:not(:disabled) { border-color: var(--accent); }
   margin-right: 4px;
 }
 
+.skill-icon img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
