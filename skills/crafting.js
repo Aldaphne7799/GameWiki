@@ -250,6 +250,7 @@ const ICON_OVERRIDES = {
 function iconName(name) {
   if (ICON_OVERRIDES[name]) return ICON_OVERRIDES[name];
   if (name.startsWith("Bowstring")) return "bowstring";
+  if (name.endsWith("Facemask")) return "facemask";
   return name
     .toLowerCase()
     .replace(/'/g, "")
