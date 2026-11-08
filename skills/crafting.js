@@ -116,12 +116,12 @@ const BASE_ITEMS = [
 
 // Collapsible groups, by required level (inclusive, NON-overlapping). Edit freely.
 const GROUPS = [
-  { min: 1,  max: 10, label: "Crafts lvl 1-10" },
-  { min: 11, max: 20, label: "Crafts lvl 11-20" },
-  { min: 21, max: 30, label: "Crafts lvl 21-30" },
-  { min: 31, max: 40, label: "Crafts lvl 31-40" },
-  { min: 41, max: 60, label: "Crafts lvl 41-60" },
-  { min: 61, max: 80, label: "Crafts lvl 61-80" },
+  { min: 1,  max: 11, label: "Crafts lvl 1-10" },
+  { min: 11, max: 21, label: "Crafts lvl 11-20" },
+  { min: 21, max: 31, label: "Crafts lvl 21-30" },
+  { min: 31, max: 41, label: "Crafts lvl 31-40" },
+  { min: 41, max: 61, label: "Crafts lvl 41-60" },
+  { min: 61, max: 81, label: "Crafts lvl 61-80" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -177,8 +177,8 @@ const BOWSTRING_RAW = {
 
 // Raw input for the base material items themselves (Leather, Cloth)
 const BASE_MAT_RAW = {
-  "Leather":              "Cowhide",
-  "Hard Leather":         "Hard Cowhide",
+  "Leather":              "Animal Hide",
+  "Hard Leather":         "Animal Hide",
   "Troll Leather":        "Troll Hide",
   "Bear Leather":         "Bear Hide",
   "Swamp D'hide Leather": "Swamp Dragonhide",
