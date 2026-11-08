@@ -166,7 +166,7 @@ function renderEqualPlan({ selected, xpNeeded, currentLevel, log, title }) {
 export const mining = {
   id: "mining",
   name: "Mining",
-  icon: "⛏️",
+  icon: "https://aldermere.online/assets/wiki/skills/mining.webp",
   active: true,
   taskTitle: "Choose your ores",
 
