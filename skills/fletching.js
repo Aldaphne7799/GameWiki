@@ -526,7 +526,7 @@ export const fletching = {
       const grid = details.querySelector(".ore-grid");
 
       ITEMS.forEach((item, i) => {
-        if (item.level < grp.min || item.level > grp.max) return;
+        if (item.level < grp.min || item.level >= grp.max) return;
 
         const label = document.createElement("label");
         label.className = "ore-item item-row";
