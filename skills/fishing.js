@@ -1,17 +1,24 @@
 import { fmt, totalXpForLevel, stepXp } from "../xp.js";
 import { xpWithBonus } from "../logs.js";
 
+const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
+
+function itemIconHTML(icon, fallbackText = "") {
+  return `<img class="item-icon" src="${ICON_BASE}${icon}.webp" alt="" width="24" height="24"
+    onerror="this.replaceWith(document.createTextNode('?'))" />${fallbackText}`;
+}
+
 /* ============ DATA ============ */
 
 const FISH = [
-  { name: "Shrimp",     lvl: 1,  xp: 10,  rod: "bronze",  spot: "shrimp" },
-  { name: "Trout",      lvl: 11, xp: 46,  rod: "iron",    spot: "river" },
-  { name: "Salmon",     lvl: 21, xp: 79,  rod: "steel",   spot: "river" },
-  { name: "Sturgeon",   lvl: 31, xp: 116, rod: "mithril", spot: "river" },
-  { name: "Barn. bass", lvl: 41, xp: 155, rod: "ebony",   spot: "sea" },
-  { name: "Stormjaw",   lvl: 51, xp: 196, rod: "ebony",   spot: "sea" },
-  { name: "Vesperfin",  lvl: 61, xp: 240, rod: "verdite", spot: "river" },
-  { name: "Cinderpike", lvl: 71, xp: 280, rod: "verdite", spot: "river" },
+  { name: "Shrimp",     lvl: 1,  xp: 10,  rod: "bronze",  spot: "shrimp", icon: "raw_shrimp" },
+  { name: "Trout",      lvl: 11, xp: 46,  rod: "iron",    spot: "river",  icon: "raw_trout" },
+  { name: "Salmon",     lvl: 21, xp: 79,  rod: "steel",   spot: "river",  icon: "raw_salmon" },
+  { name: "Sturgeon",   lvl: 31, xp: 116, rod: "mithril", spot: "river",  icon: "raw_sturgeon" },
+  { name: "Barn. bass", lvl: 41, xp: 155, rod: "ebony",   spot: "sea",    icon: "raw_barnacle_bass" },
+  { name: "Stormjaw",   lvl: 51, xp: 196, rod: "ebony",   spot: "sea",    icon: "raw_stormjaw" },
+  { name: "Vesperfin",  lvl: 61, xp: 240, rod: "verdite", spot: "river",  icon: "raw_vesperfin" },
+  { name: "Cinderpike", lvl: 71, xp: 280, rod: "verdite", spot: "river",  icon: "raw_cinderpike" },
 ];
 
 const ROD_TIERS = { bronze: 0, iron: 1, steel: 2, mithril: 3, ebony: 4, verdite: 5, tyrian: 6 };
@@ -23,13 +30,13 @@ const SPOTS = [
 ];
 
 const RODS = [
-  { id: "bronze",  label: "Bronze rod" },
-  { id: "iron",    label: "Iron rod" },
-  { id: "steel",   label: "Steel rod" },
-  { id: "mithril", label: "Mithril rod" },
-  { id: "ebony",   label: "Ebony rod" },
-  { id: "verdite", label: "Verdite rod" },
-  { id: "tyrian",  label: "Tyrian rod" },
+  { id: "bronze",  label: "Bronze rod",  icon: "bronze_fishing_rod" },
+  { id: "iron",    label: "Iron rod",    icon: "iron_fishing_rod" },
+  { id: "steel",   label: "Steel rod",   icon: "steel_fishing_rod" },
+  { id: "mithril", label: "Mithril rod", icon: "mithril_fishing_rod" },
+  { id: "ebony",   label: "Ebony rod",   icon: "ebony_fishing_rod" },
+  { id: "verdite", label: "Verdite rod", icon: "verdite_fishing_rod" },
+  { id: "tyrian",  label: "Tyrian rod",  icon: "tyrian_fishing_rod" },
 ];
 
 const MAX_LEVEL = 200;
@@ -366,7 +373,7 @@ export const fishing = {
         const fish = FISH.find((f) => f.name === name);
         const share = (count / sim.totalCatches) * 100;
         return `<tr>
-          <td>${name}</td>
+          <td>${itemIconHTML(fish.icon ?? "", name)}</td>
           <td>${fmt(roundedCatches[i])}</td>
           <td>${share.toFixed(1)}%</td>
           <td>${fmt(xpWithBonus(fish.xp, bonus))}</td>
