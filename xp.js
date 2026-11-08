@@ -23,4 +23,4 @@ export function levelForXp(xp) {
   return level;
 }
 
-export const fmt = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 1 });
+export const fmt = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 5 });
