@@ -115,7 +115,7 @@ function recipeFor(item) {
   return {};
 }
 
-
+const ITEMS = BASE_ITEMS.map((it) => ({ ...it, mats: recipeFor(it) }));
 const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
 
 // ---------- Materials calculation ----------
