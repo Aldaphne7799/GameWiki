@@ -46,7 +46,8 @@ const BASE_ITEMS = [
   { name: "Magic Potion IV",                level: 77, xp: 680, inputs: { "Embersage": 1, "Green Dragon Heart": 1 } },
 ];
 
-// Collapsible groups by required level (min inclusive, max exclusive).
+// Collapsible groups. Gathering is matched by `kind`, the rest by required level
+// (min inclusive, max exclusive).
 const GROUPS = [
   { kind: "gather", label: "Gathering" },
   { min: 1,  max: 21, label: "Potions lvl 1-21 (Tier I)" },
