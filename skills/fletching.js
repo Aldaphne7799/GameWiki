@@ -106,9 +106,9 @@ function recipeFor(item) {
   const { wood, metal } = tier;
   const n = item.name;
 
-  if (n.endsWith("Arrow Shaft"))    return { [`${wood} Logs`]: 1 };   // 1 log per batch of 20
-  if (n.startsWith("Unstrung"))     return { [`${wood} Logs`]: 1 };   // 1 log
-  if (n.endsWith("Crossbow Stock")) return { [`${wood} Logs`]: 2 };   // 2 logs
+  if (n.endsWith("Arrow Shaft"))    return { [`${wood} Log`]: 1 };   // 1 log per batch of 20
+  if (n.startsWith("Unstrung"))     return { [`${wood} Log`]: 1 };   // 1 log
+  if (n.endsWith("Crossbow Stock")) return { [`${wood} Log`]: 2 };   // 2 logs
 
   // Crossbow = stock + prod + string
   if (n.endsWith("Crossbow")) {
