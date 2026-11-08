@@ -23,42 +23,55 @@ const TIERS = {
 };
 
 const BASE_ITEMS = [
+  // Level 1-11
   { name: "20 x Birch Arrow Shaft",       level: 1,  xp: 10   },
   { name: "Birch Bow",                    level: 1,  xp: 10   },
   { name: "Bronze Crossbow",              level: 1,  xp: 20   },
   { name: "Unstrung Birch Bow",           level: 1,  xp: 20   },
   { name: "20 x Bronze Arrow",            level: 1,  xp: 40   },
   { name: "Birch Crossbow Stock",         level: 1,  xp: 40   },
+
+  // Level 11-21
   { name: "20 x Oak Arrow Shaft",         level: 11, xp: 15   },
   { name: "Oak Bow",                      level: 11, xp: 23   },
   { name: "Iron Crossbow",                level: 11, xp: 46   },
   { name: "Unstrung Oak Bow",             level: 11, xp: 46   },
   { name: "20 x Iron Arrow",              level: 11, xp: 92   },
   { name: "Oak Crossbow Stock",           level: 11, xp: 92   },
+  
+  // Level 21-31
   { name: "20 x Willow Arrow Shaft",      level: 21, xp: 20   },
   { name: "Willow Bow",                   level: 21, xp: 39.5 },
   { name: "Steel Crossbow",               level: 21, xp: 79   },
   { name: "Unstrung Willow Bow",          level: 21, xp: 79   },
   { name: "20 x Steel Arrow",             level: 21, xp: 125  },
   { name: "Willow Crossbow Stock",        level: 21, xp: 158  },
+
+  // Level 31-41
   { name: "20 x Swampwood Arrow Shaft",   level: 31, xp: 25   },
   { name: "Swampwood Bow",                level: 31, xp: 58   },
   { name: "Mithril Crossbow",             level: 31, xp: 116  },
   { name: "Unstrung Swampwood Bow",       level: 31, xp: 116  },
   { name: "20 x Mithril Arrow",           level: 31, xp: 195  },
   { name: "Swampwood Crossbow Stock",     level: 31, xp: 232  },
+
+  // Level 41-61
   { name: "20 x Maple Arrow Shaft",       level: 41, xp: 30   },
   { name: "Maple Bow",                    level: 41, xp: 77.5 },
   { name: "Ebony Crossbow",               level: 41, xp: 155  },
   { name: "Unstrung Maple Bow",           level: 41, xp: 155  },
   { name: "20 x Ebony Arrow",             level: 41, xp: 234  },
   { name: "Maple Crossbow Stock",         level: 41, xp: 310  },
+
+  // Level 61-81
   { name: "20 x Pine Arrow Shaft",        level: 61, xp: 35   },
   { name: "Pine Bow",                     level: 61, xp: 120  },
   { name: "Verdite Crossbow",             level: 61, xp: 240  },
   { name: "Unstrung Pine Bow",            level: 61, xp: 240  },
   { name: "20 x Verdite Arrow",           level: 61, xp: 319  },
   { name: "Pine Crossbow Stock",          level: 61, xp: 480  },
+
+  // Level 81-101
   { name: "20 x Moonwood Arrow Shaft",    level: 81, xp: 40   },
   { name: "Moonwood Bow",                 level: 81, xp: 160  },
   { name: "Tyrian Crossbow",              level: 81, xp: 320  },
