@@ -162,13 +162,11 @@ function iconFor(name) {
 const RAW_ICON_OVERRIDES = {
   "Bowstring": "bowstring",
   "Feather": "feather",
-  "Feather": "feather",
-  "Feather": "feather",
 };
 
 function rawIconId(name) {
   if (RAW_ICON_OVERRIDES[name]) return RAW_ICON_OVERRIDES[name];
-  return slug(name); // "Birch Logs" -> "birch_logs", "Bronze Arrowtips" -> "bronze_arrowtips"
+  return slug(name); // "Birch Log" -> "birch_log", "Bronze Arrowtips" -> "bronze_arrowtips"
 }
 
 function rawIconImg(name) {
