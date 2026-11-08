@@ -738,5 +738,9 @@ button:hover:not(:disabled) { border-color: var(--accent); }
   outline-offset: 3px;
 }
 
-
+.item-icon {
+  vertical-align: middle;
+  image-rendering: auto;
+  margin-right: 4px;
+}
 
