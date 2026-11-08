@@ -55,10 +55,9 @@ const GROUPS = [
   { min: 61, max: 81, label: "Potions lvl 61-81 (Tier IV)" },
 ];
 
-// Attach type + recipe once; ITEMS indexes stay stable
+// Attach recipe once; ITEMS indexes stay stable
 const ITEMS = BASE_ITEMS.map((it) => ({
   ...it,
-  type: getPotionType(it),
   mats: it.inputs,
 }));
 const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
