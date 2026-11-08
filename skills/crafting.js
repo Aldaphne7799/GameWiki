@@ -396,7 +396,7 @@ function rebuildRatioInputs() {
     const value = savedRatios.has(i) ? savedRatios.get(i) : 1;
     const row = document.createElement("label");
     row.className = "mix-row";
-    row.innerHTML = `<span>${ITEMS[i].name}</span>
+    row.innerHTML = `<span>${iconImg(ITEMS[i])}${ITEMS[i].name}</span>
       <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts</span>`;
     mixInputs.appendChild(row);
   });
@@ -586,7 +586,7 @@ function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
     planItems.push({ item, count });
     html += `
       <tr>
-        <td>${item.name}</td>
+        <td>${iconImg(item)}${item.name}</td>
         <td>${ratios[n]}</td>
         <td>${fmt(xpEach)}</td>
         <td>${fmt(count)}</td>
@@ -614,7 +614,7 @@ function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
     const xpEach = xpWithBonus(item.xp, log.bonus);
     html += `
       <tr>
-        <td>${item.name}</td>
+        <td>${iconImg(item)}${item.name}</td>
         <td>${item.level}</td>
         <td>${fmt(item.xp)}</td>
         <td>${fmt(xpEach)}</td>
