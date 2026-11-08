@@ -136,6 +136,44 @@ function recipeFor(item) {
   return {};
 }
 
+// ---------- Icons ----------
+
+// Default: "Moonwood Bow" -> "moonwood_bow", "20 x Birch Arrow Shaft" -> "birch_arrow_shaft"
+function slug(name) {
+  return name
+    .replace(/^\d+\s*x\s*/i, "")        // drop "20 x " batch prefix
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+// Only add entries here where the real asset name differs from slug(name).
+// Check your /assets/wiki/items/ folder and correct any that are wrong.
+const ICON_OVERRIDES = {
+  // "20 x Bronze Arrow": "bronze_arrow",
+  // "Unstrung Birch Bow": "birch_bow_u",
+};
+
+function iconFor(name) {
+  return ICON_OVERRIDES[name] ?? slug(name);
+}
+
+// Raw materials (logs, prods, tips, feathers, string)
+const RAW_ICON_OVERRIDES = {
+  "Bowstring": "bowstring",
+  "Feather": "feather",
+};
+
+function rawIconId(name) {
+  if (RAW_ICON_OVERRIDES[name]) return RAW_ICON_OVERRIDES[name];
+  return slug(name); // "Birch Logs" -> "birch_logs", "Bronze Arrowtips" -> "bronze_arrowtips"
+}
+
+function rawIconImg(name) {
+  return `<img class="item-icon" src="${ICON_BASE}${rawIconId(name)}.webp" alt="" width="24" height="24"
+    onerror="this.replaceWith(document.createTextNode('?'))" />`;
+}
+
 const ITEMS = BASE_ITEMS.map((it) => ({
   ...it,
   icon: iconFor(it.name),
