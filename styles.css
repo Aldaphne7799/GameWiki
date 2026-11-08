@@ -301,15 +301,20 @@ button:hover:not(:disabled) { border-color: var(--accent); }
 .ore-item:hover { border-color: var(--accent); }
 
 /* Selected: amber tint, gold border, check badge.
-   .oreCheck = mining, .itemCheck = fletching/crafting/ */
+   .oreCheck = mining, .itemCheck = fletching/crafting,
+   .logCheck = woodcutting, .fireCheck = firemaking */
 .ore-item:has(.oreCheck:checked),
-.ore-item:has(.itemCheck:checked) {
+.ore-item:has(.itemCheck:checked),
+.ore-item:has(.logCheck:checked),
+.ore-item:has(.fireCheck:checked) {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
 
 .ore-item:has(.oreCheck:checked)::after,
-.ore-item:has(.itemCheck:checked)::after {
+.ore-item:has(.itemCheck:checked)::after,
+.ore-item:has(.logCheck:checked)::after,
+.ore-item:has(.fireCheck:checked)::after {
   content: "✓";
   position: absolute;
   top: 50%;
@@ -336,12 +341,15 @@ button:hover:not(:disabled) { border-color: var(--accent); }
 }
 
 /* Native checkbox hidden; the whole card is the control */
-.oreCheck,
-.itemCheck {
+.ore-item .oreCheck,
+.ore-item .itemCheck,
+.ore-item .logCheck,
+.ore-item .fireCheck {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
+
 
 /* ===== Collapsible item groups (Fletching, Crafting, ...) ===== */
 .group {
