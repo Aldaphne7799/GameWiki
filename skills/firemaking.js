@@ -69,7 +69,7 @@ function setAllLogs(state) {
 export const firemaking = {
   id: "firemaking",
   name: "Firemaking",
-  icon: "🔥",
+  icon: "https://aldermere.online/assets/wiki/skills/alchemy.webp",
   active: true,
   taskTitle: "Choose your logs to burn",
 
