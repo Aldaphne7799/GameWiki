@@ -11,14 +11,14 @@ function itemIconHTML(icon, fallbackText = "") {
 /* ============ DATA ============ */
 
 const FISH = [
-  { name: "Shrimp",     lvl: 1,  xp: 10,  rod: "bronze",  spot: "shrimp", icon: "raw_shrimp" },
-  { name: "Trout",      lvl: 11, xp: 46,  rod: "iron",    spot: "river",  icon: "raw_trout" },
-  { name: "Salmon",     lvl: 21, xp: 79,  rod: "steel",   spot: "river",  icon: "raw_salmon" },
-  { name: "Sturgeon",   lvl: 31, xp: 116, rod: "mithril", spot: "river",  icon: "raw_sturgeon" },
-  { name: "Barn. bass", lvl: 41, xp: 155, rod: "ebony",   spot: "sea",    icon: "raw_barnacle_bass" },
-  { name: "Stormjaw",   lvl: 51, xp: 196, rod: "ebony",   spot: "sea",    icon: "raw_stormjaw" },
-  { name: "Vesperfin",  lvl: 61, xp: 240, rod: "verdite", spot: "river",  icon: "raw_vesperfin" },
-  { name: "Cinderpike", lvl: 71, xp: 280, rod: "verdite", spot: "river",  icon: "raw_cinderpike" },
+  { name: "Shrimp",        lvl: 1,  xp: 10,  rod: "bronze",  spot: "shrimp", icon: "raw_shrimp" },
+  { name: "Trout",         lvl: 11, xp: 46,  rod: "iron",    spot: "river",  icon: "raw_trout" },
+  { name: "Salmon",        lvl: 21, xp: 79,  rod: "steel",   spot: "river",  icon: "raw_salmon" },
+  { name: "Sturgeon",      lvl: 31, xp: 116, rod: "mithril", spot: "river",  icon: "raw_sturgeon" },
+  { name: "Barnacle Bass", lvl: 41, xp: 155, rod: "ebony",   spot: "sea",    icon: "raw_barnacle_bass" },
+  { name: "Stormjaw",      lvl: 51, xp: 196, rod: "ebony",   spot: "sea",    icon: "raw_stormjaw" },
+  { name: "Vesperfin",     lvl: 61, xp: 240, rod: "verdite", spot: "river",  icon: "raw_vesperfin" },
+  { name: "Cinderpike",    lvl: 71, xp: 280, rod: "verdite", spot: "river",  icon: "raw_cinderpike" },
 ];
 
 const ROD_TIERS = { bronze: 0, iron: 1, steel: 2, mithril: 3, ebony: 4, verdite: 5, tyrian: 6 };
