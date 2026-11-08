@@ -71,7 +71,7 @@ const BASE_ITEMS = [
   { name: "20 x Verdite Arrow",           level: 61, xp: 319  },
   { name: "Pine Crossbow Stock",          level: 61, xp: 480  },
 
-  // Level 81-101w
+  // Level 81-101
   { name: "20 x Moonwood Arrow Shaft",    level: 81, xp: 40   },
   { name: "Moonwood Bow",                 level: 81, xp: 160  },
   { name: "Tyrian Crossbow",              level: 81, xp: 320  },
@@ -80,7 +80,7 @@ const BASE_ITEMS = [
   { name: "Moonwood Crossbow Stock",      level: 81, xp: 640  },
 ];
 
-// Collapsible groups, by required level (inclusive). Edit freely.
+// Collapsible groups, by required level (min inclusive, max exclusive). Edit freely.
 const GROUPS = [
   { min: 1,  max: 11,  label: "Fletching lvl 1-11" },
   { min: 11, max: 21,  label: "Fletching lvl 11-21" },
