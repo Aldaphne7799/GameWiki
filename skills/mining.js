@@ -1,17 +1,32 @@
 import { fmt } from "../xp.js";
 import { xpWithBonus } from "../logs.js";
 
+const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
+
+// Turns "Copper" into "copper_ore" unless the ore has its own icon name
+function guessIcon(ore) {
+  const base = ore.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return base + "_ore";
+}
+
+// Returns an <img> tag, or "?" if the picture fails to load
+function iconImg(ore) {
+  const key = ore.icon || guessIcon(ore);
+  return `<img class="item-icon" src="${ICON_BASE}${key}.webp" alt="" width="24" height="24"
+    onerror="this.replaceWith(document.createTextNode('?'))" />`;
+}
+
 const ORES = [
-  { name: "Copper",             level: 1,  xp: 10   },
-  { name: "Tin",                level: 1,  xp: 10   },
+  { name: "Copper Ore",             level: 1,  xp: 10   },
+  { name: "Tin Ore",                level: 1,  xp: 10   },
   { name: "Crystal",            level: 6,  xp: 17.5 },
-  { name: "Iron",               level: 11, xp: 23   },
+  { name: "Iron Ore",               level: 11, xp: 23   },
   { name: "Coal",               level: 21, xp: 38.5 },
-  { name: "Mithril",            level: 31, xp: 56.5 },
-  { name: "Ebony",              level: 41, xp: 77.5 },
+  { name: "Mithril Ore",            level: 31, xp: 56.5 },
+  { name: "Ebony Ore",              level: 41, xp: 77.5 },
   { name: "Great Crystal Vein", level: 51, xp: 98   },
-  { name: "Verdite",            level: 61, xp: 120  },
-  { name: "Tyrian",             level: 81, xp: 160  },
+  { name: "Verdite Rock",            level: 61, xp: 120  },
+  { name: "Tyrian Ore",             level: 81, xp: 160  },
 ];
 
 // Module-level reference to the container we render into
@@ -67,7 +82,7 @@ function rebuildMixInputs() {
 
     const row = document.createElement("label");
     row.className = "mix-row";
-    row.innerHTML = `<span>${ORES[i].name}</span>
+    row.innerHTML = `<span>${iconImg(ORES[i])} ${ORES[i].name}</span>
       <span><input type="number" class="mixInput" data-ore="${i}" min="0" max="100" step="0.1" value="${value}" placeholder="0" /> %</span>`;
     mixInputs.appendChild(row);
   });
@@ -109,7 +124,7 @@ function renderSplitPlan({ selected, xpNeeded, currentLevel, log, title }) {
     totalOres += count;
     html += `
       <tr>
-        <td>${ore.name}</td>
+        <td>${iconImg(ore)} ${ore.name}</td>
         <td>${shares[n]}%</td>
         <td>${fmt(xpShare)}</td>
         <td>${fmt(xpEach)}</td>
@@ -141,7 +156,7 @@ function renderEqualPlan({ selected, xpNeeded, currentLevel, log, title }) {
   selected.forEach(({ ore }, n) => {
     html += `
       <tr>
-        <td>${ore.name}</td>
+        <td>${iconImg(ore)} ${ore.name}</td>
         <td>${fmt(countEach)}</td>
         <td>${fmt(xpEachList[n])}</td>
         <td>${fmt(countEach * xpEachList[n])}</td>
@@ -195,7 +210,7 @@ export const mining = {
       label.className = "ore-item";
       label.innerHTML = `
         <input type="checkbox" class="oreCheck" value="${i}" />
-        <span class="ore-name">${ore.name}</span>
+        <span class="ore-name">${iconImg(ore)} ${ore.name}</span>
         <span class="ore-meta">Req. Lv ${ore.level} · ${ore.xp} XP</span>`;
       oreGrid.appendChild(label);
     });
@@ -241,7 +256,7 @@ export const mining = {
       const xpEach = xpWithBonus(ore.xp, log.bonus);
       html += `
         <tr>
-          <td>${ore.name}</td>
+          <td>${iconImg(ore)} ${ore.name}</td>
           <td>${ore.level}</td>
           <td>${fmt(ore.xp)}</td>
           <td>${fmt(xpEach)}</td>
