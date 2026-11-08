@@ -290,7 +290,7 @@ function renderLevelBreakdown(levelBreakdown) {
 export const fishing = {
   id: "fishing",
   name: "Fishing",
-  icon: "🎣",
+  icon: "https://aldermere.online/assets/wiki/skills/fishing.webp",
   active: true,
   taskTitle: "Choose a fishing spot and rod",
 
