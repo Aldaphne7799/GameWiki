@@ -1,6 +1,13 @@
 import { fmt } from "../xp.js";
 import { xpWithBonus } from "../logs.js";
 
+const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
+
+function iconImg(item) {
+  return `<img class="item-icon" src="${ICON_BASE}${item.icon}.webp" alt="" width="24" height="24"
+    onerror="this.replaceWith(document.createTextNode('?'))" />`;
+}
+
 // Names, levels and XP are transcribed directly from the screenshot.
 // Items prefixed "20 x" are stackable batches (e.g. 20 arrow shafts): the XP shown
 // is for the whole batch, so counts are "crafts" (batches), not single items.
@@ -128,7 +135,11 @@ function recipeFor(item) {
   return {};
 }
 
-const ITEMS = BASE_ITEMS.map((it) => ({ ...it, mats: recipeFor(it) }));
+const ITEMS = BASE_ITEMS.map((it) => ({
+  ...it,
+  icon: iconFor(it.name),
+  mats: recipeFor(it),
+}));
 const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
 
 // ---------- Materials calculation ----------
