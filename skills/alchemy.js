@@ -48,30 +48,12 @@ const BASE_ITEMS = [
 
 // Collapsible groups by required level (min inclusive, max exclusive).
 const GROUPS = [
+  { kind: "gather", label: "Gathering" },
   { min: 1,  max: 21, label: "Potions lvl 1-21 (Tier I)" },
   { min: 21, max: 41, label: "Potions lvl 21-41 (Tier II)" },
   { min: 41, max: 61, label: "Potions lvl 41-61 (Tier III)" },
   { min: 61, max: 81, label: "Potions lvl 61-81 (Tier IV)" },
 ];
-
-// ---------------------------------------------------------------------------
-// POTION TYPES (tabs)
-// ---------------------------------------------------------------------------
-const POTION_TYPES = [
-  { id: "health",  label: "Health" },
-  { id: "mana",    label: "Mana" },
-  { id: "combat",  label: "Combat" },
-  { id: "utility", label: "Utility" },
-];
-
-function getPotionType(item) {
-  const n = item.name.toLowerCase();
-  if (item.kind === "gather") return "health"; // Red Mushroom lives with Health
-  if (n.startsWith("health potion")) return "health";
-  if (n.startsWith("mana")) return "mana";
-  if (n.startsWith("strength") || n.startsWith("dexterity") || n.startsWith("magic")) return "combat";
-  return "utility"; // Anti-venom
-}
 
 // Attach type + recipe once; ITEMS indexes stay stable
 const ITEMS = BASE_ITEMS.map((it) => ({
