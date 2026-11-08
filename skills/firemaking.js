@@ -1,14 +1,21 @@
 import { fmt } from "../xp.js";
 import { xpWithBonus } from "../logs.js";
 
+const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
+
+function iconImg(tree) {
+  return `<img class="item-icon" src="${ICON_BASE}${tree.icon}.webp" alt="" width="24" height="24"
+    onerror="this.replaceWith(document.createTextNode('?'))" />`;
+}
+
 const LOGS = [
-  { name: "Birch",     level: 1,  xp: 30    },
-  { name: "Oak",       level: 11, xp: 69    },
-  { name: "Willow",    level: 21, xp: 118.5 },
-  { name: "Swampwood", level: 31, xp: 174   },
-  { name: "Maple",     level: 41, xp: 232.5 },
-  { name: "Pine",      level: 61, xp: 360   },
-  { name: "Moonwood",  level: 81, xp: 480   },
+  { name: "Birch",     icon: "birch_log",     level: 1,  xp: 30    },
+  { name: "Oak",       icon: "oak_log",       level: 11, xp: 69    },
+  { name: "Willow",    icon: "willow_log",    level: 21, xp: 118.5 },
+  { name: "Swampwood", icon: "swampwood_log", level: 31, xp: 174   },
+  { name: "Maple",     icon: "maple_log",     level: 41, xp: 232.5 },
+  { name: "Pine",      icon: "pine_log",      level: 61, xp: 360   },
+  { name: "Moonwood",  icon: "moonwood_log",  level: 81, xp: 480   },
 ];
 
 // Module-level reference to the container we render into
@@ -52,7 +59,7 @@ function rebuildMixInputs() {
 
     const row = document.createElement("label");
     row.className = "mix-row";
-    row.innerHTML = `<span>${LOGS[i].name}</span>
+    row.innerHTML = `<span>${iconImg(LOGS[i])}${LOGS[i].name}</span>
       <span><input type="number" class="mixInput" data-log="${i}" min="0" max="100" step="0.1" value="${value}" placeholder="0" /> %</span>`;
     mixInputs.appendChild(row);
   });
@@ -69,7 +76,7 @@ function setAllLogs(state) {
 export const firemaking = {
   id: "firemaking",
   name: "Firemaking",
-  icon: "https://aldermere.online/assets/wiki/skills/alchemy.webp",
+  icon: "https://aldermere.online/assets/wiki/skills/firemaking.webp",
   active: true,
   taskTitle: "Choose your logs to burn",
 
@@ -93,7 +100,7 @@ export const firemaking = {
       label.className = "ore-item";
       label.innerHTML = `
         <input type="checkbox" class="logCheck" value="${i}" />
-        <span class="ore-name">${tree.name}</span>
+        <span class="ore-name">${iconImg(tree)}${tree.name}</span>
         <span class="ore-meta">Req. Lv ${tree.level} · ${tree.xp} XP</span>`;
       logGrid.appendChild(label);
     });
@@ -145,7 +152,7 @@ export const firemaking = {
           totalLogs += count;
           html += `
             <tr>
-              <td>${tree.name}</td>
+              <td>${iconImg(tree)}${tree.name}</td>
               <td>${shares[n]}%</td>
               <td>${fmt(xpShare)}</td>
               <td>${fmt(xpEach)}</td>
@@ -169,7 +176,7 @@ export const firemaking = {
       const xpEach = xpWithBonus(tree.xp, log.bonus);
       html += `
         <tr>
-          <td>${tree.name}</td>
+          <td>${iconImg(tree)}${tree.name}</td>
           <td>${tree.level}</td>
           <td>${fmt(tree.xp)}</td>
           <td>${fmt(xpEach)}</td>
