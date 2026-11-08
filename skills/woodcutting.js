@@ -69,7 +69,7 @@ function setAllLogs(state) {
 export const woodcutting = {
   id: "woodcutting",
   name: "Woodcutting",
-  icon: "🪓",
+  icon: "https://aldermere.online/assets/wiki/skills/woodcutting.webp",
   active: true,
   taskTitle: "Choose your logs",
 
