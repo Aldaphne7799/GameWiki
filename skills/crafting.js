@@ -1,6 +1,14 @@
 import { fmt } from "../xp.js";
 import { xpWithBonus } from "../logs.js";
 
+const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
+
+function iconImg(item) {
+  if (!item.icon) return "";
+  return `<img class="item-icon" src="${ICON_BASE}${item.icon}.webp" alt="" width="24" height="24"
+    onerror="this.replaceWith(document.createTextNode('?'))" />`;
+}
+
 // Names, levels and XP are transcribed directly from the screenshots.
 // XP values use dots here (the source used decimal commas).
 // Bowstring appears once per tier, so the tier level is appended to keep names unique.
@@ -233,11 +241,29 @@ function recipeFor(item) {
 }
 
 // Attach type + recipe once; ITEMS indexes stay stable
+// Icon name = item name in lowercase with underscores (e.g. "Hard Leather Helm" -> "hard_leather_helm").
+// Bowstring tiers all share one icon. Add special cases to ICON_OVERRIDES if an icon breaks.
+const ICON_OVERRIDES = {
+  // "Swamp D'hide Leather": "swamp_dhide_leather",
+};
+
+function iconName(name) {
+  if (ICON_OVERRIDES[name]) return ICON_OVERRIDES[name];
+  if (name.startsWith("Bowstring")) return "bowstring";
+  return name
+    .toLowerCase()
+    .replace(/'/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
 const ITEMS = BASE_ITEMS.map((it) => ({
   ...it,
+  icon: iconName(it.name),
   type: getCraftType(it),
   mats: recipeFor(it),
 }));
+
 const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
 
 // ---------- Materials calculation ----------
@@ -472,7 +498,7 @@ function renderGroups() {
       label.dataset.index = i;
       label.innerHTML = `
         <input type="checkbox" class="itemCheck" value="${i}" />
-        <span class="ore-name">${item.name}</span>
+        <span class="ore-name">${iconImg(item)}${item.name}</span>
         <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
       grid.appendChild(label);
     });
