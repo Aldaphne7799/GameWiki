@@ -12,16 +12,16 @@ function iconImg(item) {
 // Icons for raw materials (not in ITEMS). Add more as you look them up in the wiki JSON.
 const RAW_ICONS = {
   "Toetoe": "toetoe",
-  // "Wool": "wool",
-  // "Hemp": "hemp",
-  // "Flax": "flax",
-  // "Stinkreed": "stinkreed",
-  // "Sunthread": "sunthread",
-  // "Animal Hide": "animal_hide",
-  // "Troll Hide": "troll_hide",
-  // "Bear Hide": "bear_hide",
-  // "Swamp Dragonhide": "swamp_dragonhide",
-  // "Green Dragonhide": "green_dragonhide",
+  "Wool": "wool",
+  "Hemp": "hemp",
+  "Flax": "flax",
+  "Stinkreed": "stinkreed",
+  "Sunthread": "sunthread",
+  "Animal Hide": "animal_hide",
+  "Troll Hide": "troll_hide",
+  "Bear Hide": "bear_hide",
+  "Swamp Dragonhide": "swamp_dragonhide",
+  "Green Dragonhide": "green_dragonhide",
 };
 
 function rawIconImg(name) {
