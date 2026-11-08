@@ -22,7 +22,7 @@ const TIERS = {
   81: { wood: "Moonwood",  metal: "Tyrian" },
 };
 
-const ITEMS = [
+const BASE_ITEMS = [
   // Level 1-11
   { name: "20 x Birch Arrow Shaft",       level: 1,  xp: 10   },
   { name: "Birch Bow",                    level: 1,  xp: 10   },
@@ -38,7 +38,7 @@ const ITEMS = [
   { name: "Unstrung Oak Bow",             level: 11, xp: 46   },
   { name: "20 x Iron Arrow",              level: 11, xp: 92   },
   { name: "Oak Crossbow Stock",           level: 11, xp: 92   },
-  
+
   // Level 21-31
   { name: "20 x Willow Arrow Shaft",      level: 21, xp: 20   },
   { name: "Willow Bow",                   level: 21, xp: 39.5 },
@@ -71,7 +71,7 @@ const ITEMS = [
   { name: "20 x Verdite Arrow",           level: 61, xp: 319  },
   { name: "Pine Crossbow Stock",          level: 61, xp: 480  },
 
-  // Level 81-101
+  // Level 81-101w
   { name: "20 x Moonwood Arrow Shaft",    level: 81, xp: 40   },
   { name: "Moonwood Bow",                 level: 81, xp: 160  },
   { name: "Tyrian Crossbow",              level: 81, xp: 320  },
@@ -80,9 +80,22 @@ const ITEMS = [
   { name: "Moonwood Crossbow Stock",      level: 81, xp: 640  },
 ];
 
+// Collapsible groups, by required level (inclusive). Edit freely.
+const GROUPS = [
+  { min: 1,  max: 11,  label: "Fletching lvl 1-11" },
+  { min: 11, max: 21,  label: "Fletching lvl 11-21" },
+  { min: 21, max: 31,  label: "Fletching lvl 21-31" },
+  { min: 31, max: 41,  label: "Fletching lvl 31-41" },
+  { min: 41, max: 61,  label: "Fletching lvl 41-61" },
+  { min: 61, max: 81,  label: "Fletching lvl 61-81" },
+  { min: 81, max: 101, label: "Fletching lvl 81-101" },
+];
+
 // Direct ingredients PER CRAFT, built from the tier + item name.
 function recipeFor(item) {
-  const { wood, metal } = TIERS[item.level];
+  const tier = TIERS[item.level];
+  if (!tier) return {}; // unknown tier: treat as having no recipe instead of throwing
+  const { wood, metal } = tier;
   const n = item.name;
 
   if (n.endsWith("Arrow Shaft"))    return { [`${wood} Logs`]: 1 };   // 1 log per batch of 20
@@ -218,6 +231,15 @@ function updateSelectedCount() {
   if (el) el.textContent = `${selectedIndexes().length} selected`;
 }
 
+// Refresh the "(selected/total)" counter in every group header
+function updateGroupCounts() {
+  qa(".group").forEach((g) => {
+    const boxes = [...g.querySelectorAll(".itemCheck")];
+    const checked = boxes.filter((b) => b.checked).length;
+    g.querySelector(".group-count").textContent = `(${checked}/${boxes.length})`;
+  });
+}
+
 function updateMixTotal() {
   const mixTotal = q(".mixTotal");
   const sum = qa(".mixInput").reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
@@ -277,20 +299,52 @@ function rebuildMixInputs() {
   updateMixTotal();
 }
 
+function onSelectionChange() {
+  updateGroupCounts();
+  rebuildMixInputs();
+}
+
 // Select all / clear only affect items currently visible (respects the filter box)
 function setVisibleItems(state) {
   qa(".item-row").forEach((label) => {
     if (label.hidden) return;
     label.querySelector(".itemCheck").checked = state;
   });
-  rebuildMixInputs();
+  onSelectionChange();
+}
+
+// Per-group shortcut (also respects the filter box)
+function setGroupItems(groupEl, state) {
+  groupEl.querySelectorAll(".item-row").forEach((label) => {
+    if (label.hidden) return;
+    label.querySelector(".itemCheck").checked = state;
+  });
+  onSelectionChange();
 }
 
 function applyFilter() {
   const term = q(".itemFilter").value.trim().toLowerCase();
-  qa(".item-row").forEach((label) => {
-    const name = ITEMS[parseInt(label.dataset.index, 10)].name.toLowerCase();
-    label.hidden = term !== "" && !name.includes(term);
+
+  qa(".group").forEach((g) => {
+    let anyVisible = false;
+
+    g.querySelectorAll(".item-row").forEach((label) => {
+      const name = ITEMS[parseInt(label.dataset.index, 10)].name.toLowerCase();
+      const match = term === "" || name.includes(term);
+      label.hidden = !match;
+      if (match) anyVisible = true;
+    });
+
+    // Hide groups with no matches; auto-open groups with matches while filtering
+    g.hidden = !anyVisible;
+    if (term !== "") {
+      if (g.dataset.userOpen === undefined) g.dataset.userOpen = g.open ? "1" : "0";
+      g.open = anyVisible;
+    } else if (g.dataset.userOpen !== undefined) {
+      // Filter cleared: restore whatever state the group had before filtering
+      g.open = g.dataset.userOpen === "1";
+      delete g.dataset.userOpen;
+    }
   });
 }
 
@@ -441,7 +495,7 @@ export const fletching = {
         <button type="button" class="clearBtn">Clear</button>
         <span class="selectedCount">0 selected</span>
       </div>
-      <div class="ore-grid"></div>
+      <div class="groups"></div>
       <div class="modeRow">
         <label><input type="radio" name="splitMode" value="xp" checked /> Split by XP %</label>
         <label><input type="radio" name="splitMode" value="equal" /> Equal crafts (like the game)</label>
@@ -452,23 +506,64 @@ export const fletching = {
         <div class="mixTotal"></div>
       </div>`;
 
-    const grid = q(".ore-grid");
-    ITEMS.forEach((item, i) => {
-      const label = document.createElement("label");
-      label.className = "ore-item item-row";
-      label.dataset.index = i;
-      label.innerHTML = `
-        <input type="checkbox" class="itemCheck" value="${i}" />
-        <span class="ore-name">${item.name}</span>
-        <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
-      grid.appendChild(label);
+    const groupsEl = q(".groups");
+
+    GROUPS.forEach((grp) => {
+      const details = document.createElement("details");
+      details.className = "group";
+
+      details.innerHTML = `
+        <summary>
+          <span class="group-label">${grp.label}</span>
+          <span class="group-count"></span>
+          <span class="group-actions">
+            <button type="button" class="groupAllBtn">all</button>
+            <button type="button" class="groupNoneBtn">none</button>
+          </span>
+        </summary>
+        <div class="ore-grid"></div>`;
+
+      const grid = details.querySelector(".ore-grid");
+
+      ITEMS.forEach((item, i) => {
+        if (item.level < grp.min || item.level > grp.max) return;
+
+        const label = document.createElement("label");
+        label.className = "ore-item item-row";
+        label.dataset.index = i;
+        label.innerHTML = `
+          <input type="checkbox" class="itemCheck" value="${i}" />
+          <span class="ore-name">${item.name}</span>
+          <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
+        grid.appendChild(label);
+      });
+
+      // Buttons live inside <summary>: stop clicks from toggling the dropdown
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+      details.querySelector(".groupAllBtn").addEventListener("click", (e) => {
+        stop(e);
+        setGroupItems(details, true);
+      });
+      details.querySelector(".groupNoneBtn").addEventListener("click", (e) => {
+        stop(e);
+        setGroupItems(details, false);
+      });
+
+      groupsEl.appendChild(details);
     });
 
-    qa(".itemCheck").forEach((c) => c.addEventListener("change", rebuildMixInputs));
+    qa(".itemCheck").forEach((c) => c.addEventListener("change", onSelectionChange));
     qa('input[name="splitMode"]').forEach((r) => r.addEventListener("change", rebuildMixInputs));
     q(".itemFilter").addEventListener("input", applyFilter);
     q(".selectAllBtn").addEventListener("click", () => setVisibleItems(true));
     q(".clearBtn").addEventListener("click", () => setVisibleItems(false));
+
+    // Open the first group by default so the panel isn't just a column of headers
+    const first = q(".group");
+    if (first) first.open = true;
+
+    updateGroupCounts();
+    updateSelectedCount();
 
     // Apply the level hint right away if the level is already known
     if (lastLevel !== null) applyLevelHint(lastLevel);
@@ -481,7 +576,7 @@ export const fletching = {
     applyLevelHint(level);
   },
 
-    // Returns an HTML string for the results panel.
+  // Returns an HTML string for the results panel.
   // After inserting it into the page, call wireMatsInputs(resultsElement).
   calculate({ xpNeeded, currentLevel, log }) {
     const selected = selectedIndexes().map((i) => ({ item: ITEMS[i], i }));
