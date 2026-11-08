@@ -3,24 +3,30 @@ import { xpWithBonus } from "../logs.js";
 
 const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
 
+const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
+
+function guessIcon(ore) {
+  return ore.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+}
+
 // Returns an <img> tag, or "?" if the picture fails to load
 function iconImg(ore) {
-  const key = ore.icon;
+  const key = ore.icon || guessIcon(ore);
   return `<img class="item-icon" src="${ICON_BASE}${key}.webp" alt="" width="24" height="24"
     onerror="this.replaceWith(document.createTextNode('?'))" />`;
 }
 
 const ORES = [
-  { name: "Copper Ore",             level: 1,  xp: 10   },
-  { name: "Tin Ore",                level: 1,  xp: 10   },
-  { name: "Crystal",            level: 6,  xp: 17.5 },
-  { name: "Iron Ore",               level: 11, xp: 23   },
-  { name: "Coal",               level: 21, xp: 38.5 },
-  { name: "Mithril Ore",            level: 31, xp: 56.5 },
-  { name: "Ebony Ore",              level: 41, xp: 77.5 },
-  { name: "Great Crystal Vein", level: 51, xp: 98   },
-  { name: "Verdite Rock",            level: 61, xp: 120  },
-  { name: "Tyrian Ore",             level: 81, xp: 160  },
+  { name: "Copper Ore",         icon: "copper_ore",         level: 1,  xp: 10   },
+  { name: "Tin Ore",            icon: "tin_ore",            level: 1,  xp: 10   },
+  { name: "Crystal",            icon: "crystal",            level: 6,  xp: 17.5 },
+  { name: "Iron Ore",           icon: "iron_ore",           level: 11, xp: 23   },
+  { name: "Coal",               icon: "coal",               level: 21, xp: 38.5 },
+  { name: "Mithril Ore",        icon: "mithril_ore",        level: 31, xp: 56.5 },
+  { name: "Ebony Ore",          icon: "ebony_ore",          level: 41, xp: 77.5 },
+  { name: "Great Crystal Vein", icon: "great_crystal_vein", level: 51, xp: 98   },
+  { name: "Verdite Rock",       icon: "verdite_rock",       level: 61, xp: 120  },
+  { name: "Tyrian Ore",         icon: "tyrian_ore",         level: 81, xp: 160  },
 ];
 
 // Module-level reference to the container we render into
