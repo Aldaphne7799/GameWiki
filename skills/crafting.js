@@ -116,12 +116,12 @@ const BASE_ITEMS = [
 
 // Collapsible groups, by required level (inclusive, NON-overlapping). Edit freely.
 const GROUPS = [
-  { min: 1,  max: 11, label: "Crafts lvl 1-10" },
-  { min: 11, max: 21, label: "Crafts lvl 11-20" },
-  { min: 21, max: 31, label: "Crafts lvl 21-30" },
-  { min: 31, max: 41, label: "Crafts lvl 31-40" },
-  { min: 41, max: 61, label: "Crafts lvl 41-60" },
-  { min: 61, max: 81, label: "Crafts lvl 61-80" },
+  { min: 1,  max: 11, label: "Crafts lvl 1-11" },
+  { min: 11, max: 21, label: "Crafts lvl 11-21" },
+  { min: 21, max: 31, label: "Crafts lvl 21-31" },
+  { min: 31, max: 41, label: "Crafts lvl 31-41" },
+  { min: 41, max: 61, label: "Crafts lvl 41-61" },
+  { min: 61, max: 81, label: "Crafts lvl 61-81" },
 ];
 
 // ---------------------------------------------------------------------------
