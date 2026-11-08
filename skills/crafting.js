@@ -5,7 +5,7 @@ import { xpWithBonus } from "../logs.js";
 // XP values use dots here (the source used decimal commas).
 // Bowstring appears once per tier, so the tier level is appended to keep names unique.
 const ITEMS = [
-  // Level 1-10
+  // Level 1-11
   { name: "Bowstring (Lv 1)",       level: 1,  xp: 5 },
   { name: "Leather",                level: 1,  xp: 5 },
   { name: "Wool Cloth",             level: 3,  xp: 5 },
@@ -23,7 +23,7 @@ const ITEMS = [
   { name: "Leather Body",           level: 10, xp: 25 },
   { name: "Wool Robe Top",          level: 10, xp: 25 },
 
-  // Level 11-20
+  // Level 11-21
   { name: "Bowstring (Lv 11)",      level: 11, xp: 11.5 },
   { name: "Hard Leather",           level: 11, xp: 11.5 },
   { name: "Hemp Cloth",             level: 11, xp: 11.5 },
@@ -41,7 +41,7 @@ const ITEMS = [
   { name: "Hard Leather Body",      level: 20, xp: 57.5 },
   { name: "Hemp Robe Top",          level: 20, xp: 57.5 },
 
-  // Level 21-30
+  // Level 21-31
   { name: "Bowstring (Lv 21)",      level: 21, xp: 19.75 },
   { name: "Troll Leather",          level: 21, xp: 19.75 },
   { name: "Flax Cloth",             level: 21, xp: 19.75 },
@@ -59,7 +59,7 @@ const ITEMS = [
   { name: "Troll Hide Body",        level: 30, xp: 98.75 },
   { name: "Flax Robe Top",          level: 30, xp: 98.75 },
 
-  // Level 31-40
+  // Level 31-41
   { name: "Bowstring (Lv 31)",      level: 31, xp: 29 },
   { name: "Bear Leather",           level: 31, xp: 29 },
   { name: "Stinkreed Cloth",        level: 31, xp: 29 },
@@ -77,7 +77,7 @@ const ITEMS = [
   { name: "Bear Hide Body",         level: 40, xp: 145 },
   { name: "Stinkreed Robe Top",     level: 40, xp: 145 },
 
-  // Level 41-60
+  // Level 41-61
   { name: "Bowstring (Lv 41)",      level: 41, xp: 38.75 },
   { name: "Swamp D'hide Leather",   level: 41, xp: 38.75 },
   { name: "Toetoe Cloth",           level: 41, xp: 38.75 },
@@ -95,7 +95,7 @@ const ITEMS = [
   { name: "Swamp D'hide Body",      level: 57, xp: 193.75 },
   { name: "Toetoe Robe Top",        level: 57, xp: 193.75 },
 
-  // Level 61-80
+  // Level 61-81
   { name: "Bowstring (Lv 61)",      level: 61, xp: 60 },
   { name: "Green D'hide Leather",   level: 61, xp: 60 },
   { name: "Sunthread Cloth",        level: 61, xp: 60 },
