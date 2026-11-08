@@ -3,8 +3,6 @@ import { xpWithBonus } from "../logs.js";
 
 const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
 
-const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
-
 function guessIcon(ore) {
   return ore.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
