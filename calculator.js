@@ -32,10 +32,19 @@ SKILLS.forEach((skill) => {
   tile.className = "skill-tile" + (skill.active ? "" : " disabled");
   tile.dataset.skill = skill.id;
   tile.disabled = !skill.active;
+    // If the icon looks like an image address or file path, draw a picture;
+  // otherwise treat it as an emoji/text.
+  const isImage = /^(https?:\/\/|\/|\.\/|\.\.\/)/.test(skill.icon);
+  const iconHtml = isImage
+    ? `<img src="${skill.icon}" alt="" width="40" height="40"
+         onerror="this.replaceWith(document.createTextNode('?'))" />`
+    : skill.icon;
+
   tile.innerHTML = `
-    <span class="skill-icon">${skill.icon}</span>
+    <span class="skill-icon">${iconHtml}</span>
     <span class="skill-name">${skill.name}</span>
     ${skill.active ? "" : '<span class="soon">Coming soon</span>'}`;
+
   if (skill.active) tile.addEventListener("click", () => selectSkill(skill.id));
   skillGrid.appendChild(tile);
 });
