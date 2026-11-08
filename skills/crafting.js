@@ -9,6 +9,27 @@ function iconImg(item) {
     onerror="this.replaceWith(document.createTextNode('?'))" />`;
 }
 
+// Icons for raw materials (not in ITEMS). Add more as you look them up in the wiki JSON.
+const RAW_ICONS = {
+  "Toetoe": "toetoe",
+  // "Wool": "wool",
+  // "Hemp": "hemp",
+  // "Flax": "flax",
+  // "Stinkreed": "stinkreed",
+  // "Sunthread": "sunthread",
+  // "Animal Hide": "animal_hide",
+  // "Troll Hide": "troll_hide",
+  // "Bear Hide": "bear_hide",
+  // "Swamp Dragonhide": "swamp_dragonhide",
+  // "Green Dragonhide": "green_dragonhide",
+};
+
+function rawIconImg(name) {
+  const icon = RAW_ICONS[name];
+  if (!icon) return "";
+  return iconImg({ icon });
+}
+
 // Names, levels and XP are transcribed directly from the screenshots.
 // XP values use dots here (the source used decimal commas).
 // Bowstring appears once per tier, so the tier level is appended to keep names unique.
