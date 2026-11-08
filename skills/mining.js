@@ -3,12 +3,6 @@ import { xpWithBonus } from "../logs.js";
 
 const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
 
-// Turns "Copper" into "copper_ore" unless the ore has its own icon name
-function guessIcon(ore) {
-  const base = ore.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-  return base + "_ore";
-}
-
 // Returns an <img> tag, or "?" if the picture fails to load
 function iconImg(ore) {
   const key = ore.icon || guessIcon(ore);
