@@ -124,8 +124,34 @@ const GROUPS = [
   { min: 61, max: 80, label: "Crafts lvl 61-80" },
 ];
 
-// Module-level reference to the container we render into
+// ---------------------------------------------------------------------------
+// CRAFT TYPES: Leather vs Cloth
+// ---------------------------------------------------------------------------
+const CRAFT_TYPES = [
+  { id: "leather", label: "Leather" },
+  { id: "cloth",   label: "Cloth" },
+];
+
+// Anything containing one of these is cloth
+const CLOTH_KEYWORDS = ["wool", "hemp", "flax", "stinkreed", "toetoe", "sunthread"];
+
+// Always cloth, checked first (bowstrings and facemasks)
+const CLOTH_OVERRIDES = ["bowstring", "facemask"];
+
+function getCraftType(item) {
+  const n = item.name.toLowerCase();
+  if (CLOTH_OVERRIDES.some((k) => n.includes(k))) return "cloth";
+  if (CLOTH_KEYWORDS.some((k) => n.includes(k))) return "cloth";
+  return "leather"; // leather, hard leather, troll/bear hide, d'hide
+}
+
+// Classify once up front; ITEMS indexes stay untouched
+const ITEM_TYPES = ITEMS.map(getCraftType);
+
+// Module-level state
 let root = null;
+let activeType = "leather";
+let currentLevel = null; // remembered so the above-level hint survives tab switches
 
 const q = (sel) => root.querySelector(sel);
 const qa = (sel) => [...root.querySelectorAll(sel)];
@@ -232,6 +258,101 @@ function applyFilter() {
   });
 }
 
+// Apply the "above your level" hint to whatever is currently rendered
+function applyLevelHint() {
+  if (!root || currentLevel === null) return;
+  qa(".item-row").forEach((label) => {
+    const item = ITEMS[parseInt(label.dataset.index, 10)];
+    label.classList.toggle("above-level", currentLevel < item.level);
+  });
+}
+
+// Build the group list for the active craft type
+function renderGroups() {
+  const groupsEl = q(".groups");
+  groupsEl.innerHTML = "";
+
+  GROUPS.forEach((grp) => {
+    // Indexes of items in this group that belong to the active craft type
+    const indexes = [];
+    ITEMS.forEach((item, i) => {
+      if (ITEM_TYPES[i] !== activeType) return;
+      if (item.level < grp.min || item.level > grp.max) return;
+      indexes.push(i);
+    });
+
+    if (indexes.length === 0) return; // skip empty groups
+
+    const details = document.createElement("details");
+    details.className = "group";
+
+    details.innerHTML = `
+      <summary>
+        <span class="group-label">${grp.label}</span>
+        <span class="group-count"></span>
+        <span class="group-actions">
+          <button type="button" class="groupAllBtn">all</button>
+          <button type="button" class="groupNoneBtn">none</button>
+        </span>
+      </summary>
+      <div class="ore-grid"></div>`;
+
+    const grid = details.querySelector(".ore-grid");
+
+    indexes.forEach((i) => {
+      const item = ITEMS[i];
+      const label = document.createElement("label");
+      label.className = "ore-item item-row";
+      label.dataset.index = i;
+      label.innerHTML = `
+        <input type="checkbox" class="itemCheck" value="${i}" />
+        <span class="ore-name">${item.name}</span>
+        <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
+      grid.appendChild(label);
+    });
+
+    // Buttons live inside <summary>: stop clicks from toggling the dropdown
+    const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+    details.querySelector(".groupAllBtn").addEventListener("click", (e) => {
+      stop(e);
+      setGroupItems(details, true);
+    });
+    details.querySelector(".groupNoneBtn").addEventListener("click", (e) => {
+      stop(e);
+      setGroupItems(details, false);
+    });
+
+    groupsEl.appendChild(details);
+  });
+
+  qa(".itemCheck").forEach((c) => c.addEventListener("change", onSelectionChange));
+
+  // Open the first group by default so the panel isn't just a column of headers
+  const first = q(".group");
+  if (first) first.open = true;
+
+  // Re-apply the current filter text and level hint to the new tab
+  applyFilter();
+  applyLevelHint();
+
+  // New tab = fresh (empty) selection, so refresh counters and the mix panel
+  onSelectionChange();
+}
+
+function setActiveType(type) {
+  if (type === activeType) return;
+  activeType = type;
+
+  qa(".craftTab").forEach((btn) => {
+    const on = btn.dataset.type === activeType;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+
+  // Groups are rebuilt, so previous checkboxes disappear (selection resets)
+  renderGroups();
+}
+
 export const crafting = {
   id: "crafting",
   name: "Crafting",
@@ -241,7 +362,16 @@ export const crafting = {
 
   renderTask(container) {
     root = container;
+    activeType = "leather"; // default tab each time the panel is built
+
     root.innerHTML = `
+      <div class="craft-tabs" role="tablist">
+        ${CRAFT_TYPES.map((t) => `
+          <button type="button" role="tab"
+            class="craftTab ${t.id === activeType ? "active" : ""}"
+            data-type="${t.id}"
+            aria-selected="${t.id === activeType}">${t.label}</button>`).join("")}
+      </div>
       <div class="ore-actions">
         <input type="search" class="itemFilter" placeholder="Filter items (e.g. boots, hemp, d'hide)..." />
         <button type="button" class="selectAllBtn">Select all</button>
@@ -254,74 +384,23 @@ export const crafting = {
         <div class="mixTotal"></div>
       </div>`;
 
-    const groupsEl = q(".groups");
-
-    GROUPS.forEach((grp) => {
-      const details = document.createElement("details");
-      details.className = "group";
-
-      details.innerHTML = `
-        <summary>
-          <span class="group-label">${grp.label}</span>
-          <span class="group-count"></span>
-          <span class="group-actions">
-            <button type="button" class="groupAllBtn">all</button>
-            <button type="button" class="groupNoneBtn">none</button>
-          </span>
-        </summary>
-        <div class="ore-grid"></div>`;
-
-      const grid = details.querySelector(".ore-grid");
-
-      ITEMS.forEach((item, i) => {
-        if (item.level < grp.min || item.level > grp.max) return;
-
-        const label = document.createElement("label");
-        label.className = "ore-item item-row";
-        label.dataset.index = i;
-        label.innerHTML = `
-          <input type="checkbox" class="itemCheck" value="${i}" />
-          <span class="ore-name">${item.name}</span>
-          <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
-        grid.appendChild(label);
-      });
-
-      // Buttons live inside <summary>: stop clicks from toggling the dropdown
-      const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
-      details.querySelector(".groupAllBtn").addEventListener("click", (e) => {
-        stop(e);
-        setGroupItems(details, true);
-      });
-      details.querySelector(".groupNoneBtn").addEventListener("click", (e) => {
-        stop(e);
-        setGroupItems(details, false);
-      });
-
-      groupsEl.appendChild(details);
-    });
-
-    qa(".itemCheck").forEach((c) => c.addEventListener("change", onSelectionChange));
+    qa(".craftTab").forEach((btn) =>
+      btn.addEventListener("click", () => setActiveType(btn.dataset.type))
+    );
     q(".itemFilter").addEventListener("input", applyFilter);
     q(".selectAllBtn").addEventListener("click", () => setVisibleItems(true));
     q(".clearBtn").addEventListener("click", () => setVisibleItems(false));
 
-    // Open the first group by default so the panel isn't just a column of headers
-    const first = q(".group");
-    if (first) first.open = true;
-
-    updateGroupCounts();
+    renderGroups();
   },
 
   // Visual hint (not a lock) for items above the current level
   onLevelChange(level) {
-    if (!root) return;
-    qa(".item-row").forEach((label) => {
-      const item = ITEMS[parseInt(label.dataset.index, 10)];
-      label.classList.toggle("above-level", level < item.level);
-    });
+    currentLevel = level;
+    applyLevelHint();
   },
 
-  // Returns an HTML string for the results panel
+   // Returns an HTML string for the results panel
   calculate({ xpNeeded, currentLevel, log }) {
     const selected = selectedIndexes().map((i) => ({ item: ITEMS[i], i }));
 
