@@ -1,6 +1,18 @@
 import { fmt } from "../xp.js";
 import { xpWithBonus } from "../logs.js";
 
+const ITEM_ICON_BASE = "https://aldermere.online/assets/wiki/items/";
+
+// Turns an icon name into an <img> tag. If the picture fails to load,
+// it hides itself instead of showing a broken-image symbol.
+function iconImg(item, size = 24) {
+  if (!item || !item.icon) return "";
+  return `<img class="item-icon" src="${ITEM_ICON_BASE}${escapeHtml(item.icon)}.webp"
+    alt="" width="${size}" height="${size}" loading="lazy"
+    onerror="this.style.display='none'" />`;
+}
+
+
 // Potion data transcribed from the Alchemy table screenshots.
 // Each recipe = 1 herb + N secondary ingredients, made at the Alchemy table.
 // `inputs` is the recipe for ONE potion.
@@ -55,6 +67,19 @@ const GROUPS = [
   { min: 41, max: 61, label: "Potions lvl 41-61 (Tier III)" },
   { min: 61, max: 81, label: "Potions lvl 61-81 (Tier IV)" },
 ];
+
+// Auto-generate icon names like "health_potion_i" from "Health Potion I".
+// Names with brackets, e.g. "Anti-venom I (Adder Venom)", drop the bracket
+// part, and hyphens become underscores. Add `icon: "..."` to any item
+// whose picture doesn't load.
+function guessIcon(name) {
+  return name
+    .replace(/\s*\(.*?\)\s*/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+ITEMS.forEach((it) => { if (!it.icon) it.icon = guessIcon(it.name); });
 
 const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
 
@@ -176,7 +201,7 @@ function updateGroupCounts() {
   });
 }
 
-// Rebuild the "Crafts per round" rows for the current selection.
+// Rebuild the "Crafts per round" s for the current selection.
 function rebuildRatioInputs() {
   updateSelectedCount();
 
@@ -201,7 +226,7 @@ function rebuildRatioInputs() {
     const value = savedRatios.has(i) ? savedRatios.get(i) : 1;
     const row = document.createElement("label");
     row.className = "mix-row";
-    row.innerHTML = `<span>${escapeHtml(ITEMS[i].name)}</span>
+    row.innerHTML = `<span>${iconImg(ITEMS[i], 20)} ${escapeHtml(ITEMS[i].name)}</span>
       <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${escapeHtml(value)}" placeholder="0" /> crafts</span>`;
     mixInputs.appendChild(row);
   });
@@ -305,8 +330,9 @@ function renderGroups() {
       const label = document.createElement("label");
       label.className = "ore-item item-row";
       label.dataset.index = i;
-      label.innerHTML = `
+            label.innerHTML = `
         <input type="checkbox" class="itemCheck" value="${i}" />
+        ${iconImg(item)}
         <span class="ore-name">${escapeHtml(item.name)}</span>
         <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
       grid.appendChild(label);
@@ -374,7 +400,7 @@ function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
     planItems.push({ item, count });
     html += `
       <tr>
-        <td>${escapeHtml(item.name)}</td>
+        <td>${iconImg(item, 20)} ${escapeHtml(item.name)}</td>
         <td>${ratios[n]}</td>
         <td>${fmt(xpEach)}</td>
         <td>${fmt(count)}</td>
@@ -402,7 +428,7 @@ function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
     const xpEach = xpWithBonus(item.xp, log.bonus);
     html += `
       <tr>
-        <td>${escapeHtml(item.name)}</td>
+        <td>${iconImg(item, 20)} ${escapeHtml(item.name)}</td>
         <td>${item.level}</td>
         <td>${fmt(item.xp)}</td>
         <td>${fmt(xpEach)}</td>
