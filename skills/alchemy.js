@@ -254,25 +254,24 @@ function applyLevelHint(level) {
   });
 }
 
-// Build the group list for the active potion type
+// Build the group list (single list, no tabs)
 function renderGroups() {
   const groupsEl = q(".groups");
   groupsEl.innerHTML = "";
 
   GROUPS.forEach((grp) => {
-   const indexes = [];
-ITEMS.forEach((item, i) => {
-  if (grp.kind) {
-    // Gathering group: match by kind only
-    if (item.kind !== grp.kind) return;
-  } else {
-    // Potion groups: skip gathering items, then match by level range
-    if (item.kind === "gather") return;
-    if (item.level < grp.min || item.level >= grp.max) return;
-  }
-  indexes.push(i);
-});
-
+    const indexes = [];
+    ITEMS.forEach((item, i) => {
+      if (grp.kind) {
+        // Gathering group: match by kind only
+        if (item.kind !== grp.kind) return;
+      } else {
+        // Potion groups: skip gathering items, then match by level range
+        if (item.kind === "gather") return;
+        if (item.level < grp.min || item.level >= grp.max) return;
+      }
+      indexes.push(i);
+    });
 
     if (indexes.length === 0) return; // skip empty groups
 
@@ -302,6 +301,31 @@ ITEMS.forEach((item, i) => {
         <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
       grid.appendChild(label);
     });
+
+    // Buttons live inside <summary>: stop clicks from toggling the dropdown
+    const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+    details.querySelector(".groupAllBtn").addEventListener("click", (e) => {
+      stop(e);
+      setGroupItems(details, true);
+    });
+    details.querySelector(".groupNoneBtn").addEventListener("click", (e) => {
+      stop(e);
+      setGroupItems(details, false);
+    });
+
+    groupsEl.appendChild(details);
+  });
+
+  qa(".itemCheck").forEach((c) => c.addEventListener("change", onSelectionChange));
+
+  // Open the first group by default
+  const first = q(".group");
+  if (first) first.open = true;
+
+  applyFilter();
+  applyLevelHint(lastLevel);
+  onSelectionChange();
+}
 
     // Buttons live inside <summary>: stop clicks from toggling the dropdown
     const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
