@@ -5,7 +5,7 @@ const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
 
 // Returns an <img> tag, or "?" if the picture fails to load
 function iconImg(ore) {
-  const key = ore.icon || guessIcon(ore);
+  const key = ore.icon;
   return `<img class="item-icon" src="${ICON_BASE}${key}.webp" alt="" width="24" height="24"
     onerror="this.replaceWith(document.createTextNode('?'))" />`;
 }
