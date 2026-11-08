@@ -272,6 +272,7 @@ function iconName(name) {
   if (ICON_OVERRIDES[name]) return ICON_OVERRIDES[name];
   if (name.startsWith("Bowstring")) return "bowstring";
   if (name.endsWith("Facemask")) return "facemask";
+  if (name.endsWith("Quiver")) return "quiver";
   return name
     .toLowerCase()
     .replace(/'/g, "")
@@ -337,7 +338,7 @@ function matsTable(totals, heading) {
       <tr><th>Material</th><th>Needed</th><th>You have</th><th>Still need</th></tr>
       ${rows.map(([mat, qty]) => `
         <tr>
-          <td>${mat}</td>
+          <td>${rawIconImg(mat)}${mat}</td>
           <td>${fmt(qty)}</td>
           <td><input type="number" class="haveInput" min="0" step="1"
                      data-need="${qty}" placeholder="0"
