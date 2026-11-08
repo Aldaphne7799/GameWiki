@@ -68,9 +68,9 @@ function getPotionType(item) {
   const n = item.name.toLowerCase();
   if (item.kind === "gather") return "health"; // Red Mushroom lives with Health
   if (n.startsWith("health potion")) return "health";
-  if (n.startsWith("mana potion")) return "mana";
+  if (n.startsWith("mana")) return "mana";
   if (n.startsWith("strength") || n.startsWith("dexterity") || n.startsWith("magic")) return "combat";
-  return "utility"; // Mana Regen, Anti-venom
+  return "utility"; // Anti-venom
 }
 
 // Attach type + recipe once; ITEMS indexes stay stable
