@@ -615,7 +615,7 @@ function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
 export const crafting = {
   id: "crafting",
   name: "Crafting",
-  icon: "🧵",
+  icon: "https://aldermere.online/assets/wiki/skills/alchemy.webp",
   active: true,
   taskTitle: "Choose your items",
 
