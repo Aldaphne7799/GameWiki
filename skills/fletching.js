@@ -479,7 +479,7 @@ function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
 export const fletching = {
   id: "fletching",
   name: "Fletching",
-  icon: "🏹",
+  icon: "https://aldermere.online/assets/wiki/skills/fletching.webp",
   active: true,
   taskTitle: "Choose your items",
 
