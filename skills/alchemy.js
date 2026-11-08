@@ -260,12 +260,19 @@ function renderGroups() {
   groupsEl.innerHTML = "";
 
   GROUPS.forEach((grp) => {
-    const indexes = [];
-    ITEMS.forEach((item, i) => {
-      if (item.type !== activeType) return;
-      if (item.level < grp.min || item.level >= grp.max) return;
-      indexes.push(i);
-    });
+   const indexes = [];
+ITEMS.forEach((item, i) => {
+  if (grp.kind) {
+    // Gathering group: match by kind only
+    if (item.kind !== grp.kind) return;
+  } else {
+    // Potion groups: skip gathering items, then match by level range
+    if (item.kind === "gather") return;
+    if (item.level < grp.min || item.level >= grp.max) return;
+  }
+  indexes.push(i);
+});
+
 
     if (indexes.length === 0) return; // skip empty groups
 
