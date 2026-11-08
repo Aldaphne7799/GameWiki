@@ -4,6 +4,7 @@ import { xpWithBonus } from "../logs.js";
 const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
 
 function iconImg(item) {
+  if (!item.icon) return "";
   return `<img class="item-icon" src="${ICON_BASE}${item.icon}.webp" alt="" width="24" height="24"
     onerror="this.replaceWith(document.createTextNode('?'))" />`;
 }
@@ -194,7 +195,7 @@ function matsTable(totals, heading) {
       <tr><th>Material</th><th>Needed</th><th>You have</th><th>Still need</th></tr>
       ${rows.map(([mat, qty]) => `
         <tr>
-          <td>${mat}</td>
+          <td>${rawIconImg(mat)}${mat}</td>
           <td>${fmt(qty)}</td>
           <td><input type="number" class="haveInput" min="0" step="1"
                      data-need="${qty}" placeholder="0"
@@ -390,7 +391,7 @@ function equalPlanHtml(selected, xpNeeded, currentLevel, log, title) {
     planItems.push({ item, count: N });
     html += `
       <tr>
-        <td>${item.name}</td>
+        <td>${iconImg(item)}${item.name}</td>
         <td>${fmt(xpEach)}</td>
         <td>${fmt(N)}</td>
         <td>${fmt(xpEach * N)}</td>
@@ -435,7 +436,7 @@ function sharePlanHtml(selected, xpNeeded, currentLevel, log, title) {
     planItems.push({ item, count });
     html += `
       <tr>
-        <td>${item.name}</td>
+        <td>${iconImg(item)}${item.name}</td>
         <td>${shares[n]}%</td>
         <td>${fmt(xpShare)}</td>
         <td>${fmt(xpEach)}</td>
@@ -462,7 +463,7 @@ function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
     const xpEach = xpWithBonus(item.xp, log.bonus);
     html += `
       <tr>
-        <td>${item.name}</td>
+        <td>${iconImg(item)}${item.name}</td>
         <td>${item.level}</td>
         <td>${fmt(item.xp)}</td>
         <td>${fmt(xpEach)}</td>
@@ -544,7 +545,7 @@ export const fletching = {
         label.dataset.index = i;
         label.innerHTML = `
           <input type="checkbox" class="itemCheck" value="${i}" />
-          <span class="ore-name">${item.name}</span>
+          <span class="ore-name">${iconImg(item)}${item.name}</span>
           <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
         grid.appendChild(label);
       });
