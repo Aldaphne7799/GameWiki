@@ -301,7 +301,7 @@ button:hover:not(:disabled) { border-color: var(--accent); }
 .ore-item:hover { border-color: var(--accent); }
 
 /* Selected: amber tint, gold border, check badge.
-   .oreCheck = mining, .itemCheck = fletching/crafting/woodcutting/firemaking */
+   .oreCheck = mining, .itemCheck = fletching/crafting/ */
 .ore-item:has(.oreCheck:checked),
 .ore-item:has(.itemCheck:checked) {
   border-color: var(--accent);
