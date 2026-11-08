@@ -19,7 +19,7 @@ const ORES = [
   { name: "Tin Ore",            icon: "tin_ore",            level: 1,  xp: 10   },
   { name: "Crystal",            icon: "crystal",            level: 6,  xp: 17.5 },
   { name: "Iron Ore",           icon: "iron_ore",           level: 11, xp: 23   },
-  { name: "Coal",               icon: "coal",               level: 21, xp: 38.5 },
+  { name: "Coal",               icon: "coal_ore",               level: 21, xp: 38.5 },
   { name: "Mithril Ore",        icon: "mithril_ore",        level: 31, xp: 56.5 },
   { name: "Ebony Ore",          icon: "ebony_ore",          level: 41, xp: 77.5 },
   { name: "Great Crystal Vein", icon: "great_crystal_vein", level: 51, xp: 98   },
