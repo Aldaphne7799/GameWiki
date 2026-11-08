@@ -114,7 +114,7 @@ const BASE_ITEMS = [
   { name: "Sunthread Robe Top",     level: 77, xp: 300 },
 ];
 
-// Collapsible groups, by required level (inclusive, NON-overlapping). Edit freely.
+// Collapsible groups, by required level (min inclusive, max exclusive). Edit freely.
 const GROUPS = [
   { min: 1,  max: 11, label: "Crafts lvl 1-11" },
   { min: 11, max: 21, label: "Crafts lvl 11-21" },
