@@ -123,7 +123,7 @@ function recipeFor(item) {
   if (n.endsWith("Arrow")) {
     return {
       [`20 x ${wood} Arrow Shaft`]: 1,
-      [`${metal} Arrowtips`]: 20,
+      [`${metal} Arrowhead`]: 20,
       "Feather": 20,
     };
   }
@@ -161,6 +161,8 @@ function iconFor(name) {
 // Raw materials (logs, prods, tips, feathers, string)
 const RAW_ICON_OVERRIDES = {
   "Bowstring": "bowstring",
+  "Feather": "feather",
+  "Feather": "feather",
   "Feather": "feather",
 };
 
