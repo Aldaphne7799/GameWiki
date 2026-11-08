@@ -22,7 +22,7 @@ const TIERS = {
   81: { wood: "Moonwood",  metal: "Tyrian" },
 };
 
-const BASE_ITEMS = [
+const ITEMS = [
   // Level 1-11
   { name: "20 x Birch Arrow Shaft",       level: 1,  xp: 10   },
   { name: "Birch Bow",                    level: 1,  xp: 10   },
