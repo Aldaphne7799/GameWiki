@@ -230,44 +230,7 @@ function buildSelect(id, labelText, options, selected) {
 
 /* ============ RESULT RENDERING ============ */
 
-function renderRodComparison({ startXp, xpNeeded, currentLevel, spot, bonus, chosenRod }) {
-  const rows = RODS.map((r) => {
-    const sim = simulate({ startXp, xpNeeded, currentLevel, rod: r.id, spot, bonus });
-    return { rod: r, sim };
-  });
 
-  const completable = rows.filter((r) => r.sim.stalledAt === null && r.sim.totalCatches > 0);
-  if (completable.length <= 1) return "";
-
-  const best = Math.min(...completable.map((r) => r.sim.totalCatches));
-  const chosen = completable.find((r) => r.rod.id === chosenRod);
-
-  const body = completable
-    .map(({ rod, sim }) => {
-      const isChosen = rod.id === chosenRod;
-      const saved = chosen ? chosen.sim.totalCatches - sim.totalCatches : 0;
-      let delta = "";
-      if (!isChosen && Math.abs(saved) >= 1) {
-        delta = saved > 0
-          ? `${fmt(Math.round(saved))} fewer`
-          : `${fmt(Math.round(-saved))} more`;
-      }
-      return `<tr${isChosen ? ' style="font-weight:bold"' : ""}>
-        <td>${rod.label}${isChosen ? " (selected)" : ""}${sim.totalCatches === best ? " ★" : ""}</td>
-        <td>${fmt(Math.ceil(sim.totalCatches))}</td>
-        <td>${delta || "-"}</td>
-      </tr>`;
-    })
-    .join("");
-
-  return `
-    <h3>Rod comparison</h3>
-    <table>
-      <thead><tr><th>Rod</th><th>Expected catches</th><th>vs. selected</th></tr></thead>
-      <tbody>${body}</tbody>
-    </table>
-    <p class="note">★ = fewest catches. Rods that can't finish the climb at this spot are hidden.</p>`;
-}
 
 function addChances(acc, chances, weightBy) {
   const out = { ...acc };
@@ -427,7 +390,6 @@ export const fishing = {
       </table>
 
       ${renderLevelBreakdown(sim.levelBreakdown)}
-      ${renderRodComparison({ startXp: begin, xpNeeded, currentLevel, spot, bonus, chosenRod: rod })}
 
       <p class="note">Figures are expected values; real results vary with luck.
         The mix shifts as you level. Catch rate per hour isn't modelled.
