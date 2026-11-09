@@ -5,6 +5,7 @@ import { firemaking } from "./firemaking.js";
 import { fletching } from "./fletching.js";
 import { crafting } from "./crafting.js";
 import { alchemy } from "./alchemy.js";
+import { farming } from "./farming.js";
 const stub = (id, name, icon) => ({
   id,
   name,
@@ -28,7 +29,7 @@ export const SKILLS = [
   fletching,
   crafting,
   alchemy,
-  stub("farming",     "Farming",    "https://aldermere.online/assets/wiki/skills/farming.webp"),
+  farming,
   stub("smithing",    "Smithing",    "https://aldermere.online/assets/wiki/skills/smithing.webp"),
   stub("cooking",     "Cooking",     "https://aldermere.online/assets/wiki/skills/cooking.webp"),
 ];
