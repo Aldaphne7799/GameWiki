@@ -2,7 +2,6 @@ import { fmt } from "../xp.js";
 import { xpWithBonus } from "../logs.js";
 
 const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
-const SKILL_ICON = "https://aldermere.online/assets/wiki/skills/farming.webp";
 
 const HERBS = [
   { id: "wildleaf", name: "Wildleaf", level: 1, plantXp: 10, herbXp: 25 },
