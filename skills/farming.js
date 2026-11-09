@@ -1,5 +1,6 @@
 // farming.js
 import { fmt } from "../xp.js";
+import { xpWithBonus } from "../logs.js";
 
 const ICON_BASE = "https://aldermere.online/assets/wiki/items/";
 
