@@ -57,6 +57,6 @@ export function actionsToGoal(xpNeeded, baseXp, bonusPercent) {
  * @returns {string}
  */
 export function formatXp(xp) {
-  return xp.toLocaleString("en", { maximumFractionDigits: 5 });
+  return xp.toLocaleString("en", { maximumFractionDigits: 2 });
 }
 
