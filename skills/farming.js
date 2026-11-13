@@ -25,22 +25,24 @@ const LIMITS = {
 // ---------------------------------------------------------------------------
 // CROP / ANIMAL DATA
 // plant = xp for planting the seed; herb / fibre = xp per herb, fibre OR seed
+// Levels and planting xp come from the wiki data (wiki.v1.json, recipes with skill 14).
+// The wiki doesn't list xp per herb / fibre, so those are estimates: herb = 2.5 x plant,
+// fibre = 0.3 x plant (the ratios the old screenshot values followed; exact for lvl 60).
 // ---------------------------------------------------------------------------
 const HERB_CROPS = {
-  Wildleaf:  { level: 1,  plant: 10,   herb: 25  },
-  Vervain:   { level: 21, plant: 39.5, herb: 99  },
-  Moonbloom: { level: 41, plant: 77.5, herb: 195 },
-  Embersage: { level: 61, plant: 120,  herb: 300 },
+  Wildleaf:  { level: 1,  plant: 10,   herb: 25     },
+  Vervain:   { level: 20, plant: 37.5, herb: 93.75  },
+  Moonbloom: { level: 40, plant: 75.5, herb: 188.75 },
+  Embersage: { level: 60, plant: 120,  herb: 300    },
 };
 
 const FIBRE_CROPS = {
-  Hemp:      { level: 11, plant: 23,   fibre: 7     },
-  Flax:      { level: 21, plant: 39.5, fibre: 11.75 },
-  Stinkreed: { level: 31, plant: 58,   fibre: 17.5  },
-  Toetoe:    { level: 41, plant: 77.5, fibre: 23.25 },
-  Sunthread: { level: 61, plant: 120,  fibre: 36    },
-  // TODO: confirm Bogsilk's level and planting xp (assumed lvl 81 / 160 xp)
-  Bogsilk:   { level: 81, plant: 160,  fibre: 63    },
+  Hemp:      { level: 10,  plant: 21,   fibre: 6.3   },
+  Flax:      { level: 20,  plant: 37.5, fibre: 11.25 },
+  Stinkreed: { level: 30,  plant: 56,   fibre: 16.8  },
+  Toetoe:    { level: 40,  plant: 75.5, fibre: 22.65 },
+  Sunthread: { level: 60,  plant: 120,  fibre: 36    },
+  Bogsilk:   { level: 100, plant: 205,  fibre: 61.5  },
 };
 
 // Herbs per picking / fibre per harvest, indexed by levels above the crop
@@ -57,20 +59,60 @@ const SEED_RULES = {
 const SEED_RAMP_LEVELS = 13;
 const PICK_VARIANCE = 0.15;
 
+// Livestock levels and xp come from the wiki data (wiki.v1.json, livestock.breeds).
 const POULTRY = {
-  Chicken:    { level: 1,  egg: 15,     grow: 10,   slaughter: 30  },
-  Copperneck: { level: 21, egg: 59.25,  grow: 39.5, slaughter: 118.5 },
-  Goose:      { level: 41, egg: 116.25, grow: 77.5, slaughter: 232.5 },
-  Stormneck:  { level: 61, egg: 180,    grow: 120,  slaughter: 360 },
+  Chicken:    { level: 1,  egg: 15,     grow: 10,   slaughter: 30    },
+  Copperneck: { level: 20, egg: 56.25,  grow: 37.5, slaughter: 112.5 },
+  Goose:      { level: 40, egg: 113.25, grow: 75.5, slaughter: 226.5 },
+  Stormneck:  { level: 60, egg: 180,    grow: 120,  slaughter: 360   },
 };
 
 const STOCK = {
-  Sheep:         { level: 1,  milk: 15,    wool: 30, grow: 10,   slaughter: 30 },
-  Cow:           { level: 21, milk: 118.5, wool: 0,  grow: 39.5, slaughter: 118.5 },
-  "Black Cow":   { level: 41, milk: 232.5, wool: 0,  grow: 77.5, slaughter: 232.5 },
-  "Spotted Cow": { level: 61, milk: 360,   wool: 0,  grow: 120,  slaughter: 360 },
-  Merino:        { level: 81, milk: 240,   wool: 480, grow: 160, slaughter: 480 },
+  Sheep:         { level: 1,  milk: 15,    wool: 30,  grow: 10,   slaughter: 30    },
+  Cow:           { level: 20, milk: 112.5, wool: 0,   grow: 37.5, slaughter: 112.5 },
+  "Black Cow":   { level: 40, milk: 226.5, wool: 0,   grow: 75.5, slaughter: 226.5 },
+  "Spotted Cow": { level: 60, milk: 360,   wool: 0,   grow: 120,  slaughter: 360   },
+  Merino:        { level: 80, milk: 240,   wool: 480, grow: 160,  slaughter: 480   },
 };
+
+// ---------------------------------------------------------------------------
+// ICONS (item icon names from the wiki data)
+// ---------------------------------------------------------------------------
+const CROP_ICONS = {
+  // crop: [harvested item, seed]. All fibre seeds share the wiki's "herb_seed" icon.
+  Wildleaf:  ["wildleaf",  "wildleaf_seed"],
+  Vervain:   ["vervain",   "vervain_seed"],
+  Moonbloom: ["moonbloom", "moonbloom_seed"],
+  Embersage: ["embersage", "embersage_seed"],
+  Hemp:      ["hemp",      "herb_seed"],
+  Flax:      ["flax",      "herb_seed"],
+  Stinkreed: ["stinkreed", "herb_seed"],
+  Toetoe:    ["toetoe",    "herb_seed"],
+  Sunthread: ["sunthread", "herb_seed"],
+  Bogsilk:   ["bogsilk",   "herb_seed"],
+};
+
+const ANIMAL_ICONS = {
+  // kind -> icon. growup shows the young animal, slaughter the adult.
+  Chicken:       { egg: "egg",                 growup: "hen_chick",               slaughter: "hen" },
+  Copperneck:    { egg: "copperneck_egg",      growup: "copperneck_hen_chick",    slaughter: "copperneck_hen" },
+  Goose:         { egg: "goose_egg",           growup: "goose_gosling",           slaughter: "goose" },
+  Stormneck:     { egg: "stormneck_goose_egg", growup: "stormneck_goose_gosling", slaughter: "stormneck_goose" },
+  Sheep:         { milk: "sheep_milk",       wool: "wool",        growup: "ewe_lamb",            slaughter: "sheep" },
+  Cow:           { milk: "cow_milk",                              growup: "heifer_calf",         slaughter: "cow" },
+  "Black Cow":   { milk: "black_cow_milk",                        growup: "black_heifer_calf",   slaughter: "black_cow" },
+  "Spotted Cow": { milk: "spotted_cow_milk",                      growup: "spotted_heifer_calf", slaughter: "spotted_cow" },
+  Merino:        { milk: "merino_milk",      wool: "merino_wool", growup: "merino_ewe_lamb",     slaughter: "merino_sheep" },
+};
+
+function iconFor(item) {
+  if (item.kind === "muck") return "manure";
+  if (item.crop) {
+    const [harvest, seed] = CROP_ICONS[item.crop] || [];
+    return item.kind === "herbHarvest" || item.kind === "fibreHarvest" ? harvest : seed;
+  }
+  return ANIMAL_ICONS[item.animal]?.[item.kind];
+}
 
 // ---------------------------------------------------------------------------
 // CALC HELPERS
@@ -199,6 +241,8 @@ const ITEMS = [
   }),
 ];
 
+ITEMS.forEach((it) => { it.icon = iconFor(it); });
+
 const supportsManure = (it) => it.kind === "herbHarvest" || it.kind === "fibreHarvest";
 
 // XP for ONE repeat of an action at `level` (before log bonus)
@@ -272,11 +316,12 @@ const CATEGORIES = [
 ];
 
 const GROUPS = [
-  { min: 1,  max: 21,  label: "Farming lvl 1-20" },
-  { min: 21, max: 41,  label: "Farming lvl 21-40" },
-  { min: 41, max: 61,  label: "Farming lvl 41-60" },
-  { min: 61, max: 81,  label: "Farming lvl 61-80" },
-  { min: 81, max: 100, label: "Farming lvl 81+" },
+  { min: 1,   max: 20,       label: "Farming lvl 1-19" },
+  { min: 20,  max: 40,       label: "Farming lvl 20-39" },
+  { min: 40,  max: 60,       label: "Farming lvl 40-59" },
+  { min: 60,  max: 80,       label: "Farming lvl 60-79" },
+  { min: 80,  max: 100,      label: "Farming lvl 80-99" },
+  { min: 100, max: Infinity, label: "Farming lvl 100" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -653,4 +698,3 @@ export const farming = {
     return html;
   },
 };
-
