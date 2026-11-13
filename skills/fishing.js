@@ -12,13 +12,12 @@ function itemIconHTML(icon, fallbackText = "") {
 
 const FISH = [
   { name: "Shrimp",        lvl: 1,  xp: 10,  rod: "bronze",  spot: "shrimp", icon: "raw_shrimp" },
-  { name: "Trout",         lvl: 11, xp: 46,  rod: "iron",    spot: "river",  icon: "raw_trout" },
-  { name: "Salmon",        lvl: 21, xp: 79,  rod: "steel",   spot: "river",  icon: "raw_salmon" },
-  { name: "Sturgeon",      lvl: 31, xp: 116, rod: "mithril", spot: "river",  icon: "raw_sturgeon" },
-  { name: "Barnacle Bass", lvl: 41, xp: 155, rod: "ebony",   spot: "sea",    icon: "raw_barnacle_bass" },
-  { name: "Stormjaw",      lvl: 51, xp: 196, rod: "ebony",   spot: "sea",    icon: "raw_stormjaw" },
-  { name: "Vesperfin",     lvl: 61, xp: 240, rod: "verdite", spot: "river",  icon: "raw_vesperfin" },
-  { name: "Cinderpike",    lvl: 71, xp: 280, rod: "verdite", spot: "river",  icon: "raw_cinderpike" },
+  { name: "Trout",         lvl: 10, xp: 42,  rod: "iron",    spot: "river",  icon: "raw_trout" },
+  { name: "Salmon",        lvl: 20, xp: 75,  rod: "steel",   spot: "river",  icon: "raw_salmon" },
+  { name: "Sturgeon",      lvl: 30, xp: 112, rod: "mithril", spot: "river",  icon: "raw_sturgeon" },
+  { name: "Barnacle Bass", lvl: 40, xp: 151, rod: "ebony",   spot: "sea",    icon: "raw_barnacle_bass" },
+  { name: "Stormjaw",      lvl: 60, xp: 240, rod: "verdite", spot: "sea",    icon: "raw_stormjaw" },
+  { name: "Vesperfin",     lvl: 80, xp: 320, rod: "tyrian",  spot: "river",  icon: "raw_vesperfin" },
 ];
 
 const ROD_TIERS = { bronze: 0, iron: 1, steel: 2, mithril: 3, ebony: 4, verdite: 5, tyrian: 6 };
@@ -155,7 +154,7 @@ function spotHasAnyFish(spot, level) {
 }
 
 // A rod unlocks at the level of the lowest-level fish that needs it.
-// Rods with no fish (e.g. tyrian) never unlock.
+// Rods with no fish never unlock.
 function rodUnlockLevel(rod) {
   const levels = FISH.filter((f) => f.rod === rod).map((f) => f.lvl);
   return levels.length ? Math.min(...levels) : Infinity;
@@ -405,4 +404,3 @@ export const fishing = {
     `;
   },
 };
-
