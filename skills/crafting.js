@@ -159,12 +159,11 @@ const GROUPS = [
 // ---------------------------------------------------------------------------
 // CRAFT TYPES: Leather vs Cloth
 // ---------------------------------------------------------------------------
-// "all" shows both lists at once. Your selection is kept when you switch tabs,
-// so you can tick leather items, switch to Cloth and tick more.
+// Your selection is kept when you switch tabs, so you can tick leather items,
+// switch to Cloth and tick more; both end up in the same plan.
 const CRAFT_TYPES = [
   { id: "leather", label: "Leather" },
   { id: "cloth",   label: "Cloth" },
-  { id: "all",     label: "Both" },
 ];
 
 // Anything containing one of these is cloth
@@ -480,7 +479,7 @@ function updateSelectedCount() {
   // Per-tab counts, so you can see what's ticked on the other tab
   qa(".craftTab").forEach((btn) => {
     const type = btn.dataset.type;
-    const n = [...selected].filter((i) => type === "all" || ITEMS[i].type === type).length;
+    const n = [...selected].filter((i) => ITEMS[i].type === type).length;
     const badge = btn.querySelector(".tab-count");
     if (badge) badge.textContent = n ? ` (${n})` : "";
   });
@@ -529,17 +528,14 @@ function refreshAutoRatios() {
     const i = parseInt(el.dataset.item, 10);
     const info = ratios.get(i);
     if (!info || !ITEMS[i].isBaseMat) return;
-    const hint = el.closest(".mix-row").querySelector(".autoHint");
     if (info.auto) {
       el.dataset.auto = "1";
       el.disabled = true;
       el.value = info.r;
-      if (hint) hint.textContent = "auto: exactly what your selected gear uses";
     } else {
       if (el.dataset.auto === "1") el.value = savedRatios.has(i) ? savedRatios.get(i) : 1;
       delete el.dataset.auto;
       el.disabled = false;
-      if (hint) hint.textContent = "";
     }
   });
 }
@@ -581,8 +577,7 @@ function rebuildRatioInputs() {
     const row = document.createElement("label");
     row.className = "mix-row";
     row.innerHTML = `<span>${iconImg(ITEMS[i])}${ITEMS[i].name}</span>
-      <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts${
-        ITEMS[i].isBaseMat ? ` <small class="autoHint note"></small>` : ""}</span>`;
+      <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts</span>`;
     mixInputs.appendChild(row);
   });
 
@@ -657,7 +652,7 @@ function renderGroups() {
     // Indexes of items in this group that belong to the active craft type
     const indexes = [];
     ITEMS.forEach((item, i) => {
-      if (activeType !== "all" && item.type !== activeType) return;
+      if (item.type !== activeType) return;
       if (item.level < grp.min || item.level >= grp.max) return;
       indexes.push(i);
     });
@@ -751,7 +746,6 @@ function usableCell(currentLevel, item) {
 function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
   const ratioMap = computeRatios(selected.map(({ i }) => i));
   const ratios = selected.map(({ i }) => ratioMap.get(i).r);
-  const autoFlags = selected.map(({ i }) => ratioMap.get(i).auto);
 
   const xpPerRound = selected.reduce(
     (s, { item }, n) => s + ratios[n] * xpWithBonus(item.xp, log.bonus), 0);
@@ -778,7 +772,7 @@ function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
     html += `
       <tr>
         <td>${iconImg(item)}${item.name}</td>
-        <td>${fmt(ratios[n])}${autoFlags[n] ? " (auto)" : ""}</td>
+        <td>${fmt(ratios[n])}</td>
         <td>${fmt(xpEach)}</td>
         <td>${fmt(count)}</td>
         <td>${fmt(xpEach * count)}</td>
