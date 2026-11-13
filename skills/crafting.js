@@ -159,9 +159,12 @@ const GROUPS = [
 // ---------------------------------------------------------------------------
 // CRAFT TYPES: Leather vs Cloth
 // ---------------------------------------------------------------------------
+// "all" shows both lists at once. Your selection is kept when you switch tabs,
+// so you can tick leather items, switch to Cloth and tick more.
 const CRAFT_TYPES = [
   { id: "leather", label: "Leather" },
   { id: "cloth",   label: "Cloth" },
+  { id: "all",     label: "Both" },
 ];
 
 // Anything containing one of these is cloth
@@ -288,9 +291,17 @@ const ITEMS = BASE_ITEMS.map((it) => ({
   icon: it.icon || iconName(it.name),
   type: getCraftType(it),
   mats: recipeFor(it),
+  // Cloth / Leather: these are used up by the gear pieces
+  isBaseMat: Boolean(BASE_MAT_RAW[it.name]),
 }));
 
 const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
+
+// Icon for any material name: crafted items first, then raw materials
+function matIconImg(name) {
+  const item = ITEM_BY_NAME[name];
+  return item ? iconImg(item) : rawIconImg(name);
+}
 
 // ---------- Materials calculation ----------
 
@@ -341,7 +352,7 @@ function matsTable(totals, heading) {
       <tr><th>Material</th><th>Needed</th><th>You have</th><th>Still need</th></tr>
       ${rows.map(([mat, qty]) => `
         <tr>
-          <td>${rawIconImg(mat)}${mat}</td>
+          <td>${matIconImg(mat)}${mat}</td>
           <td>${fmt(qty)}</td>
           <td><input type="number" class="haveInput" min="0" step="1"
                      data-need="${qty}" placeholder="0"
@@ -349,6 +360,74 @@ function matsTable(totals, heading) {
           <td class="remaining">${fmt(qty)}</td>
         </tr>`).join("")}
     </table>`;
+}
+
+// What each planned item uses: crafts x material per craft = total.
+function perItemMatsTable(planItems) {
+  const rows = [];
+  planItems.forEach(({ item, count }) => {
+    if (!count) return;
+    for (const [mat, per] of Object.entries(item.mats)) {
+      rows.push(`
+        <tr>
+          <td>${iconImg(item)}${item.name}</td>
+          <td>${fmt(count)}</td>
+          <td>${per} × ${matIconImg(mat)}${mat}</td>
+          <td>${fmt(per * count)}</td>
+        </tr>`);
+    }
+  });
+  if (rows.length === 0) return "";
+  return `
+    <h3>Materials per item</h3>
+    <table class="matsTable">
+      <tr><th>Item</th><th>Crafts</th><th>Each craft uses</th><th>Total used</th></tr>
+      ${rows.join("")}
+    </table>`;
+}
+
+// Exact cloth / leather that the gear pieces in the plan use up.
+// "Crafted in this plan" = cloth/leather crafts that are part of the plan itself.
+function baseMatsTable(planItems) {
+  const needed = {};
+  const fromPlan = {};
+  planItems.forEach(({ item, count }) => {
+    if (!count) return;
+    if (item.isBaseMat) fromPlan[item.name] = (fromPlan[item.name] || 0) + count;
+    for (const [mat, per] of Object.entries(item.mats)) {
+      if (ITEM_BY_NAME[mat]?.isBaseMat) needed[mat] = (needed[mat] || 0) + per * count;
+    }
+  });
+
+  const rows = Object.entries(needed).sort((a, b) => a[0].localeCompare(b[0]));
+  if (rows.length === 0) return "";
+  return `
+    <h3>Cloth &amp; leather needed</h3>
+    <table class="matsTable">
+      <tr><th>Material</th><th>Needed</th><th>Crafted in this plan</th><th>You have</th><th>Still need</th></tr>
+      ${rows.map(([mat, qty]) => {
+        const made = fromPlan[mat] || 0;
+        const left = Math.max(0, qty - made);
+        return `
+        <tr>
+          <td>${matIconImg(mat)}${mat}</td>
+          <td>${fmt(qty)}</td>
+          <td>${fmt(made)}</td>
+          <td><input type="number" class="haveInput" min="0" step="1"
+                     data-need="${left}" placeholder="0"
+                     aria-label="Amount of ${mat} you have" /></td>
+          <td class="remaining${left === 0 ? " done" : ""}">${fmt(left)}</td>
+        </tr>`;
+      }).join("")}
+    </table>`;
+}
+
+// All three material tables for a plan
+function materialsHtml(planItems) {
+  return perItemMatsTable(planItems) +
+    baseMatsTable(planItems) +
+    matsTable(planRawMats(planItems),
+      "Raw materials (if you craft all the cloth/leather yourself)");
 }
 
 // Call once after the results HTML has been inserted into the page
@@ -376,15 +455,93 @@ let lastLevel = null;
 // Preserved across rebuilds so ticking another item doesn't wipe a tuned ratio.
 const savedRatios = new Map();
 
+// Selected item indexes. Kept here (not read from the checkboxes) so the
+// selection survives switching between the Leather / Cloth / Both tabs.
+const selected = new Set();
+
 const q = (sel) => root.querySelector(sel);
 const qa = (sel) => [...root.querySelectorAll(sel)];
 
-const selectedIndexes = () =>
-  qa(".itemCheck:checked").map((c) => parseInt(c.value, 10));
+const selectedIndexes = () => [...selected].sort((a, b) => a - b);
+
+// Copy the state of the checkboxes currently on screen into `selected`
+function syncSelectionFromChecks() {
+  qa(".itemCheck").forEach((c) => {
+    const i = parseInt(c.value, 10);
+    if (c.checked) selected.add(i);
+    else selected.delete(i);
+  });
+}
 
 function updateSelectedCount() {
   const el = q(".selectedCount");
-  if (el) el.textContent = `${selectedIndexes().length} selected`;
+  if (el) el.textContent = `${selected.size} selected`;
+
+  // Per-tab counts, so you can see what's ticked on the other tab
+  qa(".craftTab").forEach((btn) => {
+    const type = btn.dataset.type;
+    const n = [...selected].filter((i) => type === "all" || ITEMS[i].type === type).length;
+    const badge = btn.querySelector(".tab-count");
+    if (badge) badge.textContent = n ? ` (${n})` : "";
+  });
+}
+
+// ---------- Crafts per round ----------
+
+// The ratio you typed for item i (gear, bowstrings, or cloth/leather with no gear using it)
+function manualRatio(i) {
+  const el = q(`.ratioInput[data-item="${i}"]`);
+  const raw = el && el.dataset.auto !== "1"
+    ? el.value
+    : (savedRatios.has(i) ? savedRatios.get(i) : 1);
+  const r = Math.floor(parseFloat(raw));
+  return Number.isFinite(r) && r > 0 ? r : 0;
+}
+
+// Ratios for the selected items. Cloth/leather is automatic: if any selected gear
+// uses it, its crafts per round = exactly what that gear uses per round
+// (e.g. 1 Facemask + 1 Robe Top per round = 2 + 5 = 7 Sunthread Cloth per round).
+// Returns Map(index -> { r, auto }).
+function computeRatios(idx) {
+  const res = new Map();
+  idx.forEach((i) => {
+    if (!ITEMS[i].isBaseMat) res.set(i, { r: manualRatio(i), auto: false });
+  });
+  idx.forEach((i) => {
+    const base = ITEMS[i];
+    if (!base.isBaseMat) return;
+    let need = 0;
+    idx.forEach((j) => {
+      const gear = ITEMS[j];
+      if (gear.isBaseMat) return;
+      const per = gear.mats[base.name];
+      if (per) need += per * res.get(j).r;
+    });
+    res.set(i, need > 0 ? { r: need, auto: true } : { r: manualRatio(i), auto: false });
+  });
+  return res;
+}
+
+// Update the cloth/leather inputs to show their automatic value
+function refreshAutoRatios() {
+  const ratios = computeRatios(selectedIndexes());
+  qa(".ratioInput").forEach((el) => {
+    const i = parseInt(el.dataset.item, 10);
+    const info = ratios.get(i);
+    if (!info || !ITEMS[i].isBaseMat) return;
+    const hint = el.closest(".mix-row").querySelector(".autoHint");
+    if (info.auto) {
+      el.dataset.auto = "1";
+      el.disabled = true;
+      el.value = info.r;
+      if (hint) hint.textContent = "auto: exactly what your selected gear uses";
+    } else {
+      if (el.dataset.auto === "1") el.value = savedRatios.has(i) ? savedRatios.get(i) : 1;
+      delete el.dataset.auto;
+      el.disabled = false;
+      if (hint) hint.textContent = "";
+    }
+  });
 }
 
 function updateGroupCounts() {
@@ -405,7 +562,9 @@ function rebuildRatioInputs() {
   const idx = selectedIndexes();
 
   // Remember whatever is currently typed before wiping the rows
+  // (automatic cloth/leather values aren't typed, so they're skipped)
   qa(".ratioInput").forEach((el) => {
+    if (el.dataset.auto === "1") return;
     savedRatios.set(parseInt(el.dataset.item, 10), el.value);
   });
 
@@ -422,12 +581,16 @@ function rebuildRatioInputs() {
     const row = document.createElement("label");
     row.className = "mix-row";
     row.innerHTML = `<span>${iconImg(ITEMS[i])}${ITEMS[i].name}</span>
-      <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts</span>`;
+      <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts${
+        ITEMS[i].isBaseMat ? ` <small class="autoHint note"></small>` : ""}</span>`;
     mixInputs.appendChild(row);
   });
+
+  refreshAutoRatios();
 }
 
 function onSelectionChange() {
+  syncSelectionFromChecks();
   updateGroupCounts();
   rebuildRatioInputs();
 }
@@ -494,7 +657,7 @@ function renderGroups() {
     // Indexes of items in this group that belong to the active craft type
     const indexes = [];
     ITEMS.forEach((item, i) => {
-      if (item.type !== activeType) return;
+      if (activeType !== "all" && item.type !== activeType) return;
       if (item.level < grp.min || item.level >= grp.max) return;
       indexes.push(i);
     });
@@ -523,7 +686,7 @@ function renderGroups() {
       label.className = "ore-item item-row";
       label.dataset.index = i;
       label.innerHTML = `
-        <input type="checkbox" class="itemCheck" value="${i}" />
+        <input type="checkbox" class="itemCheck" value="${i}" ${selected.has(i) ? "checked" : ""} />
         <span class="ore-name">${iconImg(item)}${item.name}</span>
         <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
       grid.appendChild(label);
@@ -545,15 +708,18 @@ function renderGroups() {
 
   qa(".itemCheck").forEach((c) => c.addEventListener("change", onSelectionChange));
 
-  // Open the first group by default so the panel isn't just a column of headers
-  const first = q(".group");
-  if (first) first.open = true;
+  // Open groups that already have ticked items; otherwise open the first group
+  const groups = qa(".group");
+  groups.forEach((g) => {
+    if (g.querySelector(".itemCheck:checked")) g.open = true;
+  });
+  if (groups.length && !groups.some((g) => g.open)) groups[0].open = true;
 
   // Re-apply the current filter text and level hint to the new tab
   applyFilter();
   applyLevelHint(lastLevel);
 
-  // New tab = fresh (empty) selection, so refresh counters and the ratio panel
+  // Selection is kept across tabs; just refresh counters and the ratio panel
   onSelectionChange();
 }
 
@@ -567,7 +733,7 @@ function setActiveType(type) {
     btn.setAttribute("aria-selected", on ? "true" : "false");
   });
 
-  // Groups are rebuilt, so previous checkboxes disappear (selection resets)
+  // Groups are rebuilt; ticked items stay ticked (they live in `selected`)
   renderGroups();
 }
 
@@ -580,12 +746,12 @@ function usableCell(currentLevel, item) {
 // Each selected item has a ratio r (crafts per round). One round yields
 // sum(r * xpEach) XP. R = smallest whole number of rounds that reaches the target.
 // Crafts per item = r * R. With every ratio at 1 this is the old "equal crafts" plan.
+// Cloth/leather that your selected gear uses gets its ratio set automatically
+// (see computeRatios), so its craft count is exactly what the gear consumes.
 function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
-  const ratios = selected.map(({ i }) => {
-    const el = q(`.ratioInput[data-item="${i}"]`);
-    const r = Math.floor(parseFloat(el?.value));
-    return Number.isFinite(r) && r > 0 ? r : 0;
-  });
+  const ratioMap = computeRatios(selected.map(({ i }) => i));
+  const ratios = selected.map(({ i }) => ratioMap.get(i).r);
+  const autoFlags = selected.map(({ i }) => ratioMap.get(i).auto);
 
   const xpPerRound = selected.reduce(
     (s, { item }, n) => s + ratios[n] * xpWithBonus(item.xp, log.bonus), 0);
@@ -612,7 +778,7 @@ function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
     html += `
       <tr>
         <td>${iconImg(item)}${item.name}</td>
-        <td>${ratios[n]}</td>
+        <td>${fmt(ratios[n])}${autoFlags[n] ? " (auto)" : ""}</td>
         <td>${fmt(xpEach)}</td>
         <td>${fmt(count)}</td>
         <td>${fmt(xpEach * count)}</td>
@@ -625,7 +791,7 @@ function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
       <td><strong>${fmt(totalCrafts)}</strong></td><td></td><td></td></tr>
     </table>`;
 
-  html += matsTable(planRawMats(planItems), "Materials needed (combined plan)");
+  html += materialsHtml(planItems);
   return html;
 }
 
@@ -656,7 +822,7 @@ function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
     const { item } = selected[0];
     const xpEach = xpWithBonus(item.xp, log.bonus);
     const count = Math.ceil(xpNeeded / xpEach);
-    html += matsTable(planRawMats([{ item, count }]), `Materials needed (${item.name})`);
+    html += materialsHtml([{ item, count }]);
   }
 
   return html;
@@ -675,6 +841,7 @@ export const crafting = {
     root = container;
     activeType = "leather"; // default tab each time the panel is built
     savedRatios.clear();
+    selected.clear();
 
     root.innerHTML = `
       <div class="craft-tabs" role="tablist">
@@ -682,7 +849,7 @@ export const crafting = {
           <button type="button" role="tab"
             class="craftTab ${t.id === activeType ? "active" : ""}"
             data-type="${t.id}"
-            aria-selected="${t.id === activeType}">${t.label}</button>`).join("")}
+            aria-selected="${t.id === activeType}">${t.label}<span class="tab-count"></span></button>`).join("")}
       </div>
       <div class="ore-actions">
         <input type="search" class="itemFilter" aria-label="Filter items"
@@ -694,8 +861,9 @@ export const crafting = {
       <div class="groups"></div>
       <div class="mixSection" hidden>
         <h3>Crafts per round</h3>
-        <p class="note">Set how many of each item to craft per round, e.g. 17 cloth
-          for every 1 of everything else. Leave everything at 1 for equal crafts.</p>
+        <p class="note">Set how many of each item to craft per round. Leave everything
+          at 1 for equal crafts. Cloth and leather fill in automatically with exactly
+          what your selected gear uses.</p>
         <div class="mixInputs"></div>
         <button type="button" class="resetRatiosBtn">Reset all to 1</button>
       </div>`;
@@ -708,7 +876,17 @@ export const crafting = {
     q(".clearBtn").addEventListener("click", () => setVisibleItems(false));
     q(".resetRatiosBtn").addEventListener("click", () => {
       savedRatios.clear();
-      qa(".ratioInput").forEach((el) => { el.value = 1; });
+      qa(".ratioInput").forEach((el) => {
+        if (el.dataset.auto !== "1") el.value = 1;
+      });
+      refreshAutoRatios();
+    });
+    // Typing a ratio updates the automatic cloth/leather values right away
+    q(".mixInputs").addEventListener("input", (e) => {
+      const el = e.target;
+      if (!el.classList.contains("ratioInput") || el.dataset.auto === "1") return;
+      savedRatios.set(parseInt(el.dataset.item, 10), el.value);
+      refreshAutoRatios();
     });
 
     renderGroups();
@@ -743,8 +921,9 @@ export const crafting = {
 
     html += `
       <p class="note">Craft counts round up, so totals can overshoot your target by up
-      to one round's worth of XP. Materials include the base cloth/leather you craft
-      yourself; if you plan those crafts too, they are counted first.</p>`;
+      to one round's worth of XP. Material amounts come from the wiki recipes: body /
+      robe top 5, legs / quiver / cape / robe bottom 3, helm / hat / facemask / boots /
+      gloves 2 cloth or leather each.</p>`;
 
     return html;
   },
