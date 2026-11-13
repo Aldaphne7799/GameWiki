@@ -10,12 +10,12 @@ function iconImg(tree) {
 
 const LOGS = [
   { name: "Birch",     icon: "birch_log",     level: 1,  xp: 10   },
-  { name: "Oak",       icon: "oak_log",       level: 11, xp: 23   },
-  { name: "Willow",    icon: "willow_log",    level: 21, xp: 39.5 },
-  { name: "Swampwood", icon: "swampwood_log", level: 31, xp: 58   },
-  { name: "Maple",     icon: "maple_log",     level: 41, xp: 77.5 },
-  { name: "Pine",      icon: "pine_log",      level: 61, xp: 120  },
-  { name: "Moonwood",  icon: "moonwood_log",  level: 81, xp: 160  },
+  { name: "Oak",       icon: "oak_log",       level: 10, xp: 21   },
+  { name: "Willow",    icon: "willow_log",    level: 20, xp: 37.5 },
+  { name: "Mirkwood",  icon: "swampwood_log", level: 30, xp: 56   },
+  { name: "Maple",     icon: "maple_log",     level: 40, xp: 75.5 },
+  { name: "Pine",      icon: "pine_log",      level: 60, xp: 120  },
+  { name: "Moonwood",  icon: "moonwood_log",  level: 80, xp: 160  },
 ];
 
 
@@ -192,4 +192,3 @@ export const woodcutting = {
     return html;
   },
 };
-
