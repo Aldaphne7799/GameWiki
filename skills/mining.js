@@ -18,13 +18,13 @@ const ORES = [
   { name: "Copper Ore",         icon: "copper_ore",         level: 1,  xp: 10   },
   { name: "Tin Ore",            icon: "tin_ore",            level: 1,  xp: 10   },
   { name: "Crystal",            icon: "crystal",            level: 6,  xp: 17.5 },
-  { name: "Iron Ore",           icon: "iron_ore",           level: 11, xp: 23   },
-  { name: "Coal",               icon: "coal_ore",           level: 21, xp: 39.5 },
-  { name: "Mithril Ore",        icon: "mithril_ore",        level: 31, xp: 56.5 },
-  { name: "Ebony Ore",          icon: "ebony_ore",          level: 41, xp: 77.5 },
+  { name: "Iron Ore",           icon: "iron_ore",           level: 10, xp: 21   },
+  { name: "Coal",               icon: "coal_ore",           level: 20, xp: 37.5 },
+  { name: "Mithril Ore",        icon: "mithril_ore",        level: 30, xp: 56   },
+  { name: "Ebony Ore",          icon: "ebony_ore",          level: 40, xp: 75.5 },
   { name: "Great Crystal Vein", icon: "crystal",            level: 51, xp: 98   },
-  { name: "Verdite Ore",        icon: "verdite_ore",        level: 61, xp: 120  },
-  { name: "Tyrian Ore",         icon: "tyrian_ore",         level: 81, xp: 160  },
+  { name: "Verdite Ore",        icon: "verdite_ore",        level: 60, xp: 120  },
+  { name: "Tyrian Ore",         icon: "tyrian_ore",         level: 80, xp: 160  },
 ];
 
 // Module-level reference to the container we render into
