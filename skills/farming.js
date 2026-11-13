@@ -42,7 +42,6 @@ const FIBRE_CROPS = {
   Stinkreed: { level: 30,  plant: 56,   fibre: 16.8  },
   Toetoe:    { level: 40,  plant: 75.5, fibre: 22.65 },
   Sunthread: { level: 60,  plant: 120,  fibre: 36    },
-  Bogsilk:   { level: 100, plant: 205,  fibre: 61.5  },
 };
 
 // Herbs per picking / fibre per harvest, indexed by levels above the crop
@@ -89,7 +88,6 @@ const CROP_ICONS = {
   Stinkreed: ["stinkreed", "herb_seed"],
   Toetoe:    ["toetoe",    "herb_seed"],
   Sunthread: ["sunthread", "herb_seed"],
-  Bogsilk:   ["bogsilk",   "herb_seed"],
 };
 
 const ANIMAL_ICONS = {
