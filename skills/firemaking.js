@@ -10,12 +10,12 @@ function iconImg(tree) {
 
 const LOGS = [
   { name: "Birch",     icon: "birch_log",     level: 1,  xp: 30    },
-  { name: "Oak",       icon: "oak_log",       level: 11, xp: 69    },
-  { name: "Willow",    icon: "willow_log",    level: 21, xp: 118.5 },
-  { name: "Swampwood", icon: "swampwood_log", level: 31, xp: 174   },
-  { name: "Maple",     icon: "maple_log",     level: 41, xp: 232.5 },
-  { name: "Pine",      icon: "pine_log",      level: 61, xp: 360   },
-  { name: "Moonwood",  icon: "moonwood_log",  level: 81, xp: 480   },
+  { name: "Oak",       icon: "oak_log",       level: 10, xp: 63    },
+  { name: "Willow",    icon: "willow_log",    level: 20, xp: 112.5 },
+  { name: "Mirkwood",  icon: "swampwood_log", level: 30, xp: 168   },
+  { name: "Maple",     icon: "maple_log",     level: 40, xp: 226.5 },
+  { name: "Pine",      icon: "pine_log",      level: 60, xp: 360   },
+  { name: "Moonwood",  icon: "moonwood_log",  level: 80, xp: 480   },
 ];
 
 // Module-level reference to the container we render into
@@ -191,4 +191,3 @@ export const firemaking = {
     return html;
   },
 };
-
