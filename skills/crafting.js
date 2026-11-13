@@ -11,17 +11,18 @@ function iconImg(item) {
 
 // Icons for raw materials (not in ITEMS). Add more as you look them up in the wiki JSON.
 const RAW_ICONS = {
-  "Toetoe": "toetoe",
   "Wool": "wool",
   "Hemp": "hemp",
   "Flax": "flax",
   "Stinkreed": "stinkreed",
+  "Toetoe": "toetoe",
   "Sunthread": "sunthread",
-  "Animal Hide": "animal_hide",
-  "Troll Hide": "troll_hide",
-  "Bear Hide": "bear_hide",
-  "Swamp Dragonhide": "swamp_dragonhide",
-  "Green Dragonhide": "green_dragonhide",
+  "Animal Hide I": "animal_hide",
+  "Animal Hide II": "animal_hide_ii",
+  "Animal Hide III": "troll_hide",
+  "Animal Hide IV": "bear_hide",
+  "Animal Hide V": "swamp_dragonhide",
+  "Animal Hide VI": "green_dragonhide",
 };
 
 function rawIconImg(name) {
@@ -30,127 +31,129 @@ function rawIconImg(name) {
   return iconImg({ icon });
 }
 
-// Names, levels and XP are transcribed directly from the screenshots.
-// XP values use dots here (the source used decimal commas).
+// Names, levels, XP and icons are taken from the wiki data (wiki.v1.json, recipes with skill 9).
+// Every item in a tier shares the tier's required level.
 // Bowstring appears once per tier, so the tier level is appended to keep names unique.
 const BASE_ITEMS = [
-  // Level 1-11
-  { name: "Bowstring (Lv 1)",       level: 1,  xp: 5 },
-  { name: "Leather",                level: 1,  xp: 5 },
-  { name: "Wool Cloth",             level: 3,  xp: 5 },
-  { name: "Leather Helm",           level: 3,  xp: 10 },
-  { name: "Wool Facemask",          level: 3,  xp: 10 },
-  { name: "Wool Hat",               level: 3,  xp: 10 },
-  { name: "Leather Boots",          level: 5,  xp: 10 },
-  { name: "Wool Boots",             level: 5,  xp: 10 },
-  { name: "Leather Gloves",         level: 6,  xp: 10 },
-  { name: "Wool Gloves",            level: 6,  xp: 10 },
-  { name: "Leather Legs",           level: 8,  xp: 15 },
-  { name: "Leather Quiver",         level: 8,  xp: 15 },
-  { name: "Wool Cape",              level: 8,  xp: 15 },
-  { name: "Wool Robe Bottom",       level: 8,  xp: 15 },
-  { name: "Leather Body",           level: 10, xp: 25 },
-  { name: "Wool Robe Top",          level: 10, xp: 25 },
+  // Level 1
+  { name: "Bowstring (Lv 1)",        level: 1,   xp: 5,      icon: "bowstring" },
+  { name: "Leather I",               level: 1,   xp: 5,      icon: "leather" },
+  { name: "Wool Cloth",              level: 1,   xp: 5,      icon: "wool_cloth" },
+  { name: "Leather Helm I",          level: 1,   xp: 10,     icon: "leather_helm" },
+  { name: "Wool Facemask",           level: 1,   xp: 10,     icon: "facemask" },
+  { name: "Wool Hat",                level: 1,   xp: 10,     icon: "wool_hat" },
+  { name: "Leather Boots I",         level: 1,   xp: 10,     icon: "leather_boots" },
+  { name: "Wool Boots",              level: 1,   xp: 10,     icon: "wool_boots" },
+  { name: "Leather Gloves I",        level: 1,   xp: 10,     icon: "leather_gloves" },
+  { name: "Wool Gloves",             level: 1,   xp: 10,     icon: "wool_gloves" },
+  { name: "Leather Legs I",          level: 1,   xp: 15,     icon: "leather_legs" },
+  { name: "Leather Quiver I",        level: 1,   xp: 15,     icon: "leather_quiver" },
+  { name: "Wool Cape",               level: 1,   xp: 15,     icon: "wool_cape" },
+  { name: "Wool Robe Bottom",        level: 1,   xp: 15,     icon: "wool_robe_bottom" },
+  { name: "Leather Body I",          level: 1,   xp: 25,     icon: "leather_body" },
+  { name: "Wool Robe Top",           level: 1,   xp: 25,     icon: "wool_robe_top" },
 
-  // Level 11-21
-  { name: "Bowstring (Lv 11)",      level: 11, xp: 11.5 },
-  { name: "Hard Leather",           level: 11, xp: 11.5 },
-  { name: "Hemp Cloth",             level: 11, xp: 11.5 },
-  { name: "Hard Leather Helm",      level: 13, xp: 23 },
-  { name: "Hemp Facemask",          level: 13, xp: 23 },
-  { name: "Hemp Hat",               level: 13, xp: 23 },
-  { name: "Hard Leather Boots",     level: 15, xp: 23 },
-  { name: "Hemp Boots",             level: 15, xp: 23 },
-  { name: "Hard Leather Gloves",    level: 16, xp: 23 },
-  { name: "Hemp Gloves",            level: 16, xp: 23 },
-  { name: "Hard Leather Legs",      level: 18, xp: 34.5 },
-  { name: "Hard Leather Quiver",    level: 18, xp: 34.5 },
-  { name: "Hemp Cape",              level: 18, xp: 34.5 },
-  { name: "Hemp Robe Bottom",       level: 18, xp: 34.5 },
-  { name: "Hard Leather Body",      level: 20, xp: 57.5 },
-  { name: "Hemp Robe Top",          level: 20, xp: 57.5 },
+  // Level 10
+  { name: "Bowstring (Lv 10)",       level: 10,  xp: 10.5,   icon: "bowstring" },
+  { name: "Leather II",              level: 10,  xp: 10.5,   icon: "hard_leather" },
+  { name: "Hemp Cloth",              level: 10,  xp: 10.5,   icon: "hemp_cloth" },
+  { name: "Leather Helm II",         level: 10,  xp: 21,     icon: "hard_leather_helm" },
+  { name: "Hemp Facemask",           level: 10,  xp: 21,     icon: "facemask" },
+  { name: "Hemp Hat",                level: 10,  xp: 21,     icon: "hemp_hat" },
+  { name: "Leather Boots II",        level: 10,  xp: 21,     icon: "hard_leather_boots" },
+  { name: "Hemp Boots",              level: 10,  xp: 21,     icon: "hemp_boots" },
+  { name: "Leather Gloves II",       level: 10,  xp: 21,     icon: "hard_leather_gloves" },
+  { name: "Hemp Gloves",             level: 10,  xp: 21,     icon: "hemp_gloves" },
+  { name: "Leather Legs II",         level: 10,  xp: 31.5,   icon: "hard_leather_legs" },
+  { name: "Leather Quiver II",       level: 10,  xp: 31.5,   icon: "hard_leather_quiver" },
+  { name: "Hemp Cape",               level: 10,  xp: 31.5,   icon: "hemp_cape" },
+  { name: "Hemp Robe Bottom",        level: 10,  xp: 31.5,   icon: "hemp_robe_bottom" },
+  { name: "Leather Body II",         level: 10,  xp: 52.5,   icon: "hard_leather_body" },
+  { name: "Hemp Robe Top",           level: 10,  xp: 52.5,   icon: "hemp_robe_top" },
 
-  // Level 21-31
-  { name: "Bowstring (Lv 21)",      level: 21, xp: 19.75 },
-  { name: "Troll Leather",          level: 21, xp: 19.75 },
-  { name: "Flax Cloth",             level: 21, xp: 19.75 },
-  { name: "Troll Hide Helm",        level: 23, xp: 39.5 },
-  { name: "Flax Facemask",          level: 23, xp: 39.5 },
-  { name: "Flax Hat",               level: 23, xp: 39.5 },
-  { name: "Troll Hide Boots",       level: 25, xp: 39.5 },
-  { name: "Flax Boots",             level: 25, xp: 39.5 },
-  { name: "Troll Hide Gloves",      level: 26, xp: 39.5 },
-  { name: "Flax Gloves",            level: 26, xp: 39.5 },
-  { name: "Troll Hide Legs",        level: 28, xp: 59.25 },
-  { name: "Troll Hide Quiver",      level: 28, xp: 59.25 },
-  { name: "Flax Cape",              level: 28, xp: 59.25 },
-  { name: "Flax Robe Bottom",       level: 28, xp: 59.25 },
-  { name: "Troll Hide Body",        level: 30, xp: 98.75 },
-  { name: "Flax Robe Top",          level: 30, xp: 98.75 },
+  // Level 20
+  { name: "Bowstring (Lv 20)",       level: 20,  xp: 18.75,  icon: "bowstring" },
+  { name: "Leather III",             level: 20,  xp: 18.75,  icon: "troll_leather" },
+  { name: "Flax Cloth",              level: 20,  xp: 18.75,  icon: "flax_cloth" },
+  { name: "Leather Helm III",        level: 20,  xp: 37.5,   icon: "troll_hide_helm" },
+  { name: "Flax Facemask",           level: 20,  xp: 37.5,   icon: "facemask" },
+  { name: "Flax Hat",                level: 20,  xp: 37.5,   icon: "flax_hat" },
+  { name: "Leather Boots III",       level: 20,  xp: 37.5,   icon: "troll_hide_boots" },
+  { name: "Flax Boots",              level: 20,  xp: 37.5,   icon: "flax_boots" },
+  { name: "Leather Gloves III",      level: 20,  xp: 37.5,   icon: "troll_hide_gloves" },
+  { name: "Flax Gloves",             level: 20,  xp: 37.5,   icon: "flax_gloves" },
+  { name: "Leather Legs III",        level: 20,  xp: 56.25,  icon: "troll_hide_legs" },
+  { name: "Leather Quiver III",      level: 20,  xp: 56.25,  icon: "troll_hide_quiver" },
+  { name: "Flax Cape",               level: 20,  xp: 56.25,  icon: "flax_cape" },
+  { name: "Flax Robe Bottom",        level: 20,  xp: 56.25,  icon: "flax_robe_bottom" },
+  { name: "Leather Body III",        level: 20,  xp: 93.75,  icon: "troll_hide_body" },
+  { name: "Flax Robe Top",           level: 20,  xp: 93.75,  icon: "flax_robe_top" },
 
-  // Level 31-41
-  { name: "Bowstring (Lv 31)",      level: 31, xp: 29 },
-  { name: "Bear Leather",           level: 31, xp: 29 },
-  { name: "Stinkreed Cloth",        level: 31, xp: 29 },
-  { name: "Bear Hide Helm",         level: 33, xp: 58 },
-  { name: "Stinkreed Facemask",     level: 33, xp: 58 },
-  { name: "Stinkreed Hat",          level: 33, xp: 58 },
-  { name: "Bear Hide Boots",        level: 35, xp: 58 },
-  { name: "Stinkreed Boots",        level: 35, xp: 58 },
-  { name: "Bear Hide Gloves",       level: 36, xp: 58 },
-  { name: "Stinkreed Gloves",       level: 36, xp: 58 },
-  { name: "Bear Hide Legs",         level: 38, xp: 87 },
-  { name: "Bear Hide Quiver",       level: 38, xp: 87 },
-  { name: "Stinkreed Cape",         level: 38, xp: 87 },
-  { name: "Stinkreed Robe Bottom",  level: 38, xp: 87 },
-  { name: "Bear Hide Body",         level: 40, xp: 145 },
-  { name: "Stinkreed Robe Top",     level: 40, xp: 145 },
+  // Level 30
+  { name: "Bowstring (Lv 30)",       level: 30,  xp: 28,     icon: "bowstring" },
+  { name: "Leather IV",              level: 30,  xp: 28,     icon: "bear_leather" },
+  { name: "Stinkreed Cloth",         level: 30,  xp: 28,     icon: "stinkreed_cloth" },
+  { name: "Leather Helm IV",         level: 30,  xp: 56,     icon: "bear_hide_helm" },
+  { name: "Stinkreed Facemask",      level: 30,  xp: 56,     icon: "facemask" },
+  { name: "Stinkreed Hat",           level: 30,  xp: 56,     icon: "stinkreed_hat" },
+  { name: "Leather Boots IV",        level: 30,  xp: 56,     icon: "bear_hide_boots" },
+  { name: "Stinkreed Boots",         level: 30,  xp: 56,     icon: "stinkreed_boots" },
+  { name: "Leather Gloves IV",       level: 30,  xp: 56,     icon: "bear_hide_gloves" },
+  { name: "Stinkreed Gloves",        level: 30,  xp: 56,     icon: "stinkreed_gloves" },
+  { name: "Leather Legs IV",         level: 30,  xp: 84,     icon: "bear_hide_legs" },
+  { name: "Leather Quiver IV",       level: 30,  xp: 84,     icon: "bear_hide_quiver" },
+  { name: "Stinkreed Cape",          level: 30,  xp: 84,     icon: "stinkreed_cape" },
+  { name: "Stinkreed Robe Bottom",   level: 30,  xp: 84,     icon: "stinkreed_robe_bottom" },
+  { name: "Leather Body IV",         level: 30,  xp: 140,    icon: "bear_hide_body" },
+  { name: "Stinkreed Robe Top",      level: 30,  xp: 140,    icon: "stinkreed_robe_top" },
 
-  // Level 41-61
-  { name: "Bowstring (Lv 41)",      level: 41, xp: 38.75 },
-  { name: "Swamp D'hide Leather",   level: 41, xp: 38.75 },
-  { name: "Toetoe Cloth",           level: 41, xp: 38.75 },
-  { name: "Swamp D'hide Helm",      level: 43, xp: 77.5 },
-  { name: "Toetoe Facemask",        level: 43, xp: 77.5 },
-  { name: "Toetoe Hat",             level: 43, xp: 77.5 },
-  { name: "Swamp D'hide Boots",     level: 46, xp: 77.5 },
-  { name: "Toetoe Boots",           level: 46, xp: 77.5 },
-  { name: "Swamp D'hide Gloves",    level: 49, xp: 77.5 },
-  { name: "Toetoe Gloves",          level: 49, xp: 77.5 },
-  { name: "Swamp D'hide Legs",      level: 53, xp: 116.25 },
-  { name: "Swamp D'hide Quiver",    level: 53, xp: 116.25 },
-  { name: "Toetoe Cape",            level: 53, xp: 116.25 },
-  { name: "Toetoe Robe Bottom",     level: 53, xp: 116.25 },
-  { name: "Swamp D'hide Body",      level: 57, xp: 193.75 },
-  { name: "Toetoe Robe Top",        level: 57, xp: 193.75 },
+  // Level 40
+  { name: "Bowstring (Lv 40)",       level: 40,  xp: 37.75,  icon: "bowstring" },
+  { name: "Leather V",               level: 40,  xp: 37.75,  icon: "swamp_dhide_leather" },
+  { name: "Toetoe Cloth",            level: 40,  xp: 37.75,  icon: "toetoe_cloth" },
+  { name: "Leather Helm V",          level: 40,  xp: 75.5,   icon: "swamp_dhide_helm" },
+  { name: "Toetoe Facemask",         level: 40,  xp: 75.5,   icon: "facemask" },
+  { name: "Toetoe Hat",              level: 40,  xp: 75.5,   icon: "toetoe_hat" },
+  { name: "Leather Boots V",         level: 40,  xp: 75.5,   icon: "swamp_dhide_boots" },
+  { name: "Toetoe Boots",            level: 40,  xp: 75.5,   icon: "toetoe_boots" },
+  { name: "Leather Gloves V",        level: 40,  xp: 75.5,   icon: "swamp_dhide_gloves" },
+  { name: "Toetoe Gloves",           level: 40,  xp: 75.5,   icon: "toetoe_gloves" },
+  { name: "Leather Legs V",          level: 40,  xp: 113.25, icon: "swamp_dhide_legs" },
+  { name: "Leather Quiver V",        level: 40,  xp: 113.25, icon: "swamp_dhide_quiver" },
+  { name: "Toetoe Cape",             level: 40,  xp: 113.25, icon: "toetoe_cape" },
+  { name: "Toetoe Robe Bottom",      level: 40,  xp: 113.25, icon: "toetoe_robe_bottom" },
+  { name: "Leather Body V",          level: 40,  xp: 188.75, icon: "swamp_dhide_body" },
+  { name: "Toetoe Robe Top",         level: 40,  xp: 188.75, icon: "toetoe_robe_top" },
 
-  // Level 61-81
-  { name: "Bowstring (Lv 61)",      level: 61, xp: 60 },
-  { name: "Green D'hide Leather",   level: 61, xp: 60 },
-  { name: "Sunthread Cloth",        level: 61, xp: 60 },
-  { name: "Green D'hide Helm",      level: 63, xp: 120 },
-  { name: "Sunthread Facemask",     level: 63, xp: 120 },
-  { name: "Sunthread Hat",          level: 63, xp: 120 },
-  { name: "Green D'hide Boots",     level: 66, xp: 120 },
-  { name: "Sunthread Boots",        level: 66, xp: 120 },
-  { name: "Green D'hide Gloves",    level: 69, xp: 120 },
-  { name: "Sunthread Gloves",       level: 69, xp: 120 },
-  { name: "Green D'hide Legs",      level: 73, xp: 180 },
-  { name: "Green D'hide Quiver",    level: 73, xp: 180 },
-  { name: "Sunthread Cape",         level: 73, xp: 180 },
-  { name: "Sunthread Robe Bottom",  level: 73, xp: 180 },
-  { name: "Green D'hide Body",      level: 77, xp: 300 },
-  { name: "Sunthread Robe Top",     level: 77, xp: 300 },
+  // Level 60
+  { name: "Bowstring (Lv 60)",       level: 60,  xp: 60,     icon: "bowstring" },
+  { name: "Leather VI",              level: 60,  xp: 60,     icon: "green_dhide_leather" },
+  { name: "Sunthread Cloth",         level: 60,  xp: 60,     icon: "sunthread_cloth" },
+  { name: "Leather Helm VI",         level: 60,  xp: 120,    icon: "green_dhide_helm" },
+  { name: "Sunthread Facemask",      level: 60,  xp: 120,    icon: "facemask" },
+  { name: "Sunthread Hat",           level: 60,  xp: 120,    icon: "sunthread_hat" },
+  { name: "Leather Boots VI",        level: 60,  xp: 120,    icon: "green_dhide_boots" },
+  { name: "Sunthread Boots",         level: 60,  xp: 120,    icon: "sunthread_boots" },
+  { name: "Leather Gloves VI",       level: 60,  xp: 120,    icon: "green_dhide_gloves" },
+  { name: "Sunthread Gloves",        level: 60,  xp: 120,    icon: "sunthread_gloves" },
+  { name: "Leather Legs VI",         level: 60,  xp: 180,    icon: "green_dhide_legs" },
+  { name: "Leather Quiver VI",       level: 60,  xp: 180,    icon: "green_dhide_quiver" },
+  { name: "Sunthread Cape",          level: 60,  xp: 180,    icon: "sunthread_cape" },
+  { name: "Sunthread Robe Bottom",   level: 60,  xp: 180,    icon: "sunthread_robe_bottom" },
+  { name: "Leather Body VI",         level: 60,  xp: 300,    icon: "green_dhide_body" },
+  { name: "Sunthread Robe Top",      level: 60,  xp: 300,    icon: "sunthread_robe_top" },
 ];
 
 // Collapsible groups, by required level (min inclusive, max exclusive). Edit freely.
 const GROUPS = [
-  { min: 1,  max: 11, label: "Crafts lvl 1-11" },
-  { min: 11, max: 21, label: "Crafts lvl 11-21" },
-  { min: 21, max: 31, label: "Crafts lvl 21-31" },
-  { min: 31, max: 41, label: "Crafts lvl 31-41" },
-  { min: 41, max: 61, label: "Crafts lvl 41-61" },
-  { min: 61, max: 81, label: "Crafts lvl 61-81" },
+  { min: 1,   max: 10,       label: "Crafts lvl 1" },
+  { min: 10,  max: 20,       label: "Crafts lvl 10" },
+  { min: 20,  max: 30,       label: "Crafts lvl 20" },
+  { min: 30,  max: 40,       label: "Crafts lvl 30" },
+  { min: 40,  max: 60,       label: "Crafts lvl 40" },
+  { min: 60,  max: 80,       label: "Crafts lvl 60" },
+  { min: 80,  max: 100,      label: "Crafts lvl 80" },
+  { min: 100, max: Infinity, label: "Crafts lvl 100" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -162,7 +165,7 @@ const CRAFT_TYPES = [
 ];
 
 // Anything containing one of these is cloth
-const CLOTH_KEYWORDS = ["wool", "hemp", "flax", "stinkreed", "toetoe", "sunthread"];
+const CLOTH_KEYWORDS = ["wool", "hemp", "flax", "stinkreed", "toetoe", "sunthread", "merino", "bogsilk"];
 
 // Always cloth, checked first (bowstrings and facemasks)
 const CLOTH_OVERRIDES = ["bowstring", "facemask"];
@@ -171,56 +174,57 @@ function getCraftType(item) {
   const n = item.name.toLowerCase();
   if (CLOTH_OVERRIDES.some((k) => n.includes(k))) return "cloth";
   if (CLOTH_KEYWORDS.some((k) => n.includes(k))) return "cloth";
-  return "leather"; // leather, hard leather, troll/bear hide, d'hide
+  return "leather"; // Leather I-VII and their gear
 }
 
 // ---------------------------------------------------------------------------
-// RECIPES (from the in-game screenshots)
+// RECIPES (from the wiki data)
 //   Body / Robe Top .............. 5 material
 //   Legs / Quiver / Cape / Robe Bottom ... 3 material
 //   Helm / Hat / Facemask / Gloves / Boots ... 2 material
 // The base material (Leather, Wool Cloth, etc.) is itself a craft in this list,
 // so it is an intermediate: crafts of it in your plan are consumed first, and any
-// shortfall expands down to the raw input (Wool, Toetoe, Swamp Dragonhide...).
+// shortfall expands down to the raw input (Wool, Toetoe, Animal Hide V...).
 // ---------------------------------------------------------------------------
 
 // Base material per tier level
 const TIER_MATS = {
-  1:  { leather: "Leather",              cloth: "Wool Cloth" },
-  11: { leather: "Hard Leather",         cloth: "Hemp Cloth" },
-  21: { leather: "Troll Leather",        cloth: "Flax Cloth" },
-  31: { leather: "Bear Leather",         cloth: "Stinkreed Cloth" },
-  41: { leather: "Swamp D'hide Leather", cloth: "Toetoe Cloth" },
-  61: { leather: "Green D'hide Leather", cloth: "Sunthread Cloth" },
+  1:   { leather: "Leather I",   cloth: "Wool Cloth" },
+  10:  { leather: "Leather II",  cloth: "Hemp Cloth" },
+  20:  { leather: "Leather III", cloth: "Flax Cloth" },
+  30:  { leather: "Leather IV",  cloth: "Stinkreed Cloth" },
+  40:  { leather: "Leather V",   cloth: "Toetoe Cloth" },
+  60:  { leather: "Leather VI",  cloth: "Sunthread Cloth" },
 };
 
-// Raw input for each tier's bowstring (screenshot shows "Toetoe" for the lv 41 string)
+// Raw input for each tier's bowstring
 const BOWSTRING_RAW = {
-  1:  "Wool",
-  11: "Hemp",
-  21: "Flax",
-  31: "Stinkreed",
-  41: "Toetoe",
-  61: "Sunthread",
+  1:   "Wool",
+  10:  "Hemp",
+  20:  "Flax",
+  30:  "Stinkreed",
+  40:  "Toetoe",
+  60:  "Sunthread",
 };
 
 // Raw input for the base material items themselves (Leather, Cloth)
 const BASE_MAT_RAW = {
-  "Leather":              "Animal Hide",
-  "Hard Leather":         "Animal Hide",
-  "Troll Leather":        "Troll Hide",
-  "Bear Leather":         "Bear Hide",
-  "Swamp D'hide Leather": "Swamp Dragonhide",
-  "Green D'hide Leather": "Green Dragonhide",
-  "Wool Cloth":           "Wool",
-  "Hemp Cloth":           "Hemp",
-  "Flax Cloth":           "Flax",
-  "Stinkreed Cloth":      "Stinkreed",
-  "Toetoe Cloth":         "Toetoe",
-  "Sunthread Cloth":      "Sunthread",
+  "Leather I":       "Animal Hide I",
+  "Leather II":      "Animal Hide II",
+  "Leather III":     "Animal Hide III",
+  "Leather IV":      "Animal Hide IV",
+  "Leather V":       "Animal Hide V",
+  "Leather VI":      "Animal Hide VI",
+  "Leather VII":     "Animal Hide VII",
+  "Wool Cloth":      "Wool",
+  "Hemp Cloth":      "Hemp",
+  "Flax Cloth":      "Flax",
+  "Stinkreed Cloth": "Stinkreed",
+  "Toetoe Cloth":    "Toetoe",
+  "Sunthread Cloth": "Sunthread",
 };
 
-// Tier base level for an item (1, 11, 21, 31, 41, 61)
+// Tier base level for an item (1, 10, 20, 30, 40, 60, 80, 100)
 function tierOf(level) {
   const tiers = Object.keys(TIER_MATS).map(Number).sort((a, b) => a - b);
   let t = tiers[0];
@@ -230,7 +234,8 @@ function tierOf(level) {
 
 // How many base materials a piece needs, by name
 function piecesCount(name) {
-  const n = name.toLowerCase();
+  // Drop a trailing tier numeral ("Leather Body IV" -> "leather body")
+  const n = name.toLowerCase().replace(/ [ivx]+$/, "");
   if (n.endsWith(" body") || n.endsWith("robe top")) return 5;
   if (n.endsWith(" legs") || n.endsWith("quiver") || n.endsWith(" cape") ||
       n.endsWith("robe bottom")) return 3;
@@ -258,15 +263,13 @@ function recipeFor(item) {
   const count = piecesCount(n);
   if (count === 0) return {};
   const type = getCraftType(item);
-  return { [mats[type]]: count };
+  return mats[type] ? { [mats[type]]: count } : {};
 }
 
 // Attach type + recipe once; ITEMS indexes stay stable
-// Icon name = item name in lowercase with underscores (e.g. "Hard Leather Helm" -> "hard_leather_helm").
-// Bowstring tiers all share one icon. Add special cases to ICON_OVERRIDES if an icon breaks.
-const ICON_OVERRIDES = {
-  // "Swamp D'hide Leather": "swamp_dhide_leather",
-};
+// Icons come from the wiki data (`icon` on each BASE_ITEMS entry). iconName() is only a
+// fallback for entries without one. Add special cases to ICON_OVERRIDES if an icon breaks.
+const ICON_OVERRIDES = {};
 
 function iconName(name) {
   if (ICON_OVERRIDES[name]) return ICON_OVERRIDES[name];
@@ -282,7 +285,7 @@ function iconName(name) {
 
 const ITEMS = BASE_ITEMS.map((it) => ({
   ...it,
-  icon: iconName(it.name),
+  icon: it.icon || iconName(it.name),
   type: getCraftType(it),
   mats: recipeFor(it),
 }));
@@ -746,4 +749,3 @@ export const crafting = {
     return html;
   },
 };
-
