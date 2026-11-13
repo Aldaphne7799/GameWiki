@@ -313,12 +313,16 @@ const CATEGORIES = [
   { id: "livestock", label: "Livestock" },
 ];
 
+
+// Collapsible groups, by required level (min inclusive, max exclusive). Edit freely.
 const GROUPS = [
-  { min: 1,   max: 20,       label: "Farming lvl 1-19" },
-  { min: 20,  max: 40,       label: "Farming lvl 20-39" },
-  { min: 40,  max: 60,       label: "Farming lvl 40-59" },
-  { min: 60,  max: 80,       label: "Farming lvl 60-79" },
-  { min: 80,  max: 100,      label: "Farming lvl 80-99" },
+  { min: 1,   max: 10,       label: "Farming lvl 1-10" },
+  { min: 10,  max: 20,       label: "Farming lvl 10-20" },
+  { min: 20,  max: 30,       label: "Farming lvl 20-30" },
+  { min: 30,  max: 40,       label: "Farming lvl 30-40" },
+  { min: 40,  max: 60,       label: "Farming lvl 40-60" },
+  { min: 60,  max: 80,       label: "Farming lvl 60-80" },
+  { min: 80,  max: 100,      label: "Farming lvl 80-100" },
   { min: 100, max: Infinity, label: "Farming lvl 100" },
 ];
 
