@@ -487,57 +487,37 @@ function updateSelectedCount() {
 
 // ---------- Crafts per round ----------
 
-// The ratio you typed for item i (gear, bowstrings, or cloth/leather with no gear using it)
-function manualRatio(i) {
+// The number typed in item i's "crafts per round" box (default 1)
+function typedRatio(i) {
   const el = q(`.ratioInput[data-item="${i}"]`);
-  const raw = el && el.dataset.auto !== "1"
-    ? el.value
-    : (savedRatios.has(i) ? savedRatios.get(i) : 1);
+  const raw = el ? el.value : (savedRatios.has(i) ? savedRatios.get(i) : 1);
   const r = Math.floor(parseFloat(raw));
   return Number.isFinite(r) && r > 0 ? r : 0;
 }
 
-// Ratios for the selected items. Cloth/leather is automatic: if any selected gear
-// uses it, its crafts per round = exactly what that gear uses per round
-// (e.g. 1 Facemask + 1 Robe Top per round = 2 + 5 = 7 Sunthread Cloth per round).
-// Returns Map(index -> { r, auto }).
+// Ratios for the selected items, as Map(index -> crafts per round).
+// Cloth/leather left at 1: the calculation uses exactly what your selected gear
+// uses per round (e.g. 1 Facemask + 1 Robe Top = 2 + 5 = 7 Sunthread Cloth).
+// Change it to anything other than 1 and your own number is used instead.
 function computeRatios(idx) {
   const res = new Map();
   idx.forEach((i) => {
-    if (!ITEMS[i].isBaseMat) res.set(i, { r: manualRatio(i), auto: false });
+    if (!ITEMS[i].isBaseMat) res.set(i, typedRatio(i));
   });
   idx.forEach((i) => {
     const base = ITEMS[i];
     if (!base.isBaseMat) return;
+    const typed = typedRatio(i);
     let need = 0;
     idx.forEach((j) => {
       const gear = ITEMS[j];
       if (gear.isBaseMat) return;
       const per = gear.mats[base.name];
-      if (per) need += per * res.get(j).r;
+      if (per) need += per * res.get(j);
     });
-    res.set(i, need > 0 ? { r: need, auto: true } : { r: manualRatio(i), auto: false });
+    res.set(i, typed === 1 && need > 0 ? need : typed);
   });
   return res;
-}
-
-// Update the cloth/leather inputs to show their automatic value
-function refreshAutoRatios() {
-  const ratios = computeRatios(selectedIndexes());
-  qa(".ratioInput").forEach((el) => {
-    const i = parseInt(el.dataset.item, 10);
-    const info = ratios.get(i);
-    if (!info || !ITEMS[i].isBaseMat) return;
-    if (info.auto) {
-      el.dataset.auto = "1";
-      el.disabled = true;
-      el.value = info.r;
-    } else {
-      if (el.dataset.auto === "1") el.value = savedRatios.has(i) ? savedRatios.get(i) : 1;
-      delete el.dataset.auto;
-      el.disabled = false;
-    }
-  });
 }
 
 function updateGroupCounts() {
@@ -558,9 +538,7 @@ function rebuildRatioInputs() {
   const idx = selectedIndexes();
 
   // Remember whatever is currently typed before wiping the rows
-  // (automatic cloth/leather values aren't typed, so they're skipped)
   qa(".ratioInput").forEach((el) => {
-    if (el.dataset.auto === "1") return;
     savedRatios.set(parseInt(el.dataset.item, 10), el.value);
   });
 
@@ -580,8 +558,6 @@ function rebuildRatioInputs() {
       <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts</span>`;
     mixInputs.appendChild(row);
   });
-
-  refreshAutoRatios();
 }
 
 function onSelectionChange() {
@@ -741,11 +717,11 @@ function usableCell(currentLevel, item) {
 // Each selected item has a ratio r (crafts per round). One round yields
 // sum(r * xpEach) XP. R = smallest whole number of rounds that reaches the target.
 // Crafts per item = r * R. With every ratio at 1 this is the old "equal crafts" plan.
-// Cloth/leather that your selected gear uses gets its ratio set automatically
-// (see computeRatios), so its craft count is exactly what the gear consumes.
+// Cloth/leather left at 1 is crafted in exactly the amount your gear uses
+// (see computeRatios); any other number you type is used as-is.
 function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
   const ratioMap = computeRatios(selected.map(({ i }) => i));
-  const ratios = selected.map(({ i }) => ratioMap.get(i).r);
+  const ratios = selected.map(({ i }) => ratioMap.get(i));
 
   const xpPerRound = selected.reduce(
     (s, { item }, n) => s + ratios[n] * xpWithBonus(item.xp, log.bonus), 0);
@@ -856,8 +832,8 @@ export const crafting = {
       <div class="mixSection" hidden>
         <h3>Crafts per round</h3>
         <p class="note">Set how many of each item to craft per round. Leave everything
-          at 1 for equal crafts. Cloth and leather fill in automatically with exactly
-          what your selected gear uses.</p>
+          at 1 for equal crafts. Cloth and leather left at 1 are calculated as exactly
+          what your selected gear uses; type another number to set them yourself.</p>
         <div class="mixInputs"></div>
         <button type="button" class="resetRatiosBtn">Reset all to 1</button>
       </div>`;
@@ -870,17 +846,7 @@ export const crafting = {
     q(".clearBtn").addEventListener("click", () => setVisibleItems(false));
     q(".resetRatiosBtn").addEventListener("click", () => {
       savedRatios.clear();
-      qa(".ratioInput").forEach((el) => {
-        if (el.dataset.auto !== "1") el.value = 1;
-      });
-      refreshAutoRatios();
-    });
-    // Typing a ratio updates the automatic cloth/leather values right away
-    q(".mixInputs").addEventListener("input", (e) => {
-      const el = e.target;
-      if (!el.classList.contains("ratioInput") || el.dataset.auto === "1") return;
-      savedRatios.set(parseInt(el.dataset.item, 10), el.value);
-      refreshAutoRatios();
+      qa(".ratioInput").forEach((el) => { el.value = 1; });
     });
 
     renderGroups();
