@@ -9,110 +9,189 @@ function iconImg(item) {
     onerror="this.replaceWith(document.createTextNode('?'))" />`;
 }
 
-// Icons for raw materials (not crafted with Fletching). Add more as you look them up.
-const RAW_ICONS = {
-  "Feather": "feather",
-  "Bowstring": "bowstring",
+// Names, levels and XP are transcribed directly from the screenshot.
+// Items prefixed "20 x" are stackable batches (e.g. 20 arrow shafts): the XP shown
+// is for the whole batch, so counts are "crafts" (batches), not single items.
+//
+// Recipes are generated per tier by recipeFor(). A material whose name matches
+// another entry in ITEMS (stock, unstrung bow, shaft batch) is an intermediate:
+// the plan's own output is consumed first, and only the shortfall expands to raws.
+// Crossbow Prods, Arrowtips, Feathers and Bowstrings are not in ITEMS, so they
+// are treated as raw materials you supply yourself.
 
-  "Birch Log": "birch_log",
-  "Oak Log": "oak_log",
-  "Willow Log": "willow_log",
-  "Mirkwood Log": "swampwood_log",
-  "Maple Log": "maple_log",
-  "Pine Log": "pine_log",
-  "Moonwood Log": "moonwood_log",
-
-  "Bronze Arrowhead": "bronze_arrowhead",
-  "Iron Arrowhead": "iron_arrowhead",
-  "Steel Arrowhead": "steel_arrowhead",
-  "Mithril Arrowhead": "mithril_arrowhead",
-  "Ebony Arrowhead": "ebony_arrowhead",
-  "Verdite Arrowhead": "verdite_arrowhead",
-  "Tyrian Arrowhead": "tyrian_arrowhead",
-
-  "Bronze Crossbow Prod": "bronze_crossbow_prod",
-  "Iron Crossbow Prod": "iron_crossbow_prod",
-  "Steel Crossbow Prod": "steel_crossbow_prod",
-  "Mithril Crossbow Prod": "mithril_crossbow_prod",
-  "Ebony Crossbow Prod": "ebony_crossbow_prod",
-  "Verdite Crossbow Prod": "verdite_crossbow_prod",
-  "Tyrian Crossbow Prod": "tyrian_crossbow_prod",
+// Wood tier pairs with the metal tier of the same level.
+const TIERS = {
+  1:  { wood: "Birch",     metal: "Bronze" },
+  10: { wood: "Oak",       metal: "Iron" },
+  20: { wood: "Willow",    metal: "Steel" },
+  30: { wood: "Mirkwood",  metal: "Mithril" },
+  40: { wood: "Maple",     metal: "Ebony" },
+  60: { wood: "Pine",      metal: "Verdite" },
+  80: { wood: "Moonwood",  metal: "Tyrian" },
 };
 
-function rawIconImg(name) {
-  const icon = RAW_ICONS[name] || ITEM_BY_NAME[name]?.icon;
-  if (!icon) return "";
-  return iconImg({ icon });
-}
+const BASE_ITEMS = [
+  // Level 1-10
+  { name: "20 x Birch Arrow Shaft",       level: 1,  xp: 10   },
+  { name: "Birch Bow",                    level: 1,  xp: 10   },
+  { name: "Bronze Crossbow",              level: 1,  xp: 20   },
+  { name: "Unstrung Birch Bow",           level: 1,  xp: 20   },
+  { name: "20 x Bronze Arrow",            level: 1,  xp: 40   },
+  { name: "Birch Crossbow Stock",         level: 1,  xp: 40   },
 
-// ---------------------------------------------------------------------------
-// ITEMS (from the wiki JSON, skill 8 = Fletching)
-//   xp    = XP per craft
-//   makes = items produced per craft (shafts and arrows make 20)
-//   mats  = inputs per craft
-//   type  = which tab it shows under
-// ---------------------------------------------------------------------------
+  // Level 10-20
+  { name: "20 x Oak Arrow Shaft",         level: 10, xp: 13.75 },
+  { name: "Oak Bow",                      level: 10, xp: 21   },
+  { name: "Iron Crossbow",                level: 10, xp: 42   },
+  { name: "Unstrung Oak Bow",             level: 10, xp: 42   },
+  { name: "20 x Iron Arrow",              level: 10, xp: 84   },
+  { name: "Oak Crossbow Stock",           level: 10, xp: 84   },
 
-// Tier table: one row per wood/metal tier. Everything below is generated from it.
-const TIERS = [
-  { level: 1,  wood: "Birch",    woodIcon: "birch",     metal: "Bronze",  xp: { shaft: 10,    unstrung: 20,  bow: 10,   arrow: 40,  stock: 40,  crossbow: 20 } },
-  { level: 10, wood: "Oak",      woodIcon: "oak",       metal: "Iron",    xp: { shaft: 13.75, unstrung: 42,  bow: 21,   arrow: 84,  stock: 84,  crossbow: 42 } },
-  { level: 20, wood: "Willow",   woodIcon: "willow",    metal: "Steel",   xp: { shaft: 19,    unstrung: 75,  bow: 37.5, arrow: 117, stock: 150, crossbow: 75 } },
-  { level: 30, wood: "Mirkwood", woodIcon: "swampwood", metal: "Mithril", xp: { shaft: 24.25, unstrung: 112, bow: 56,   arrow: 187, stock: 224, crossbow: 112 } },
-  { level: 40, wood: "Maple",    woodIcon: "maple",     metal: "Ebony",   xp: { shaft: 29.25, unstrung: 151, bow: 75.5, arrow: 226, stock: 302, crossbow: 151 } },
-  { level: 60, wood: "Pine",     woodIcon: "pine",      metal: "Verdite", xp: { shaft: 35,    unstrung: 240, bow: 120,  arrow: 315, stock: 480, crossbow: 240 } },
-  { level: 80, wood: "Moonwood", woodIcon: "moonwood",  metal: "Tyrian",  xp: { shaft: 40,    unstrung: 320, bow: 160,  arrow: 395, stock: 640, crossbow: 320 } },
+  // Level 20-30
+  { name: "20 x Willow Arrow Shaft",      level: 20, xp: 19   },
+  { name: "Willow Bow",                   level: 20, xp: 37.5 },
+  { name: "Steel Crossbow",               level: 20, xp: 75   },
+  { name: "Unstrung Willow Bow",          level: 20, xp: 75   },
+  { name: "20 x Steel Arrow",             level: 20, xp: 117  },
+  { name: "Willow Crossbow Stock",        level: 20, xp: 150  },
+
+  // Level 30-40
+  { name: "20 x Mirkwood Arrow Shaft",   level: 30, xp: 24.25 },
+  { name: "Mirkwood Bow",                level: 30, xp: 56   },
+  { name: "Mithril Crossbow",             level: 30, xp: 112  },
+  { name: "Unstrung Mirkwood Bow",       level: 30, xp: 112  },
+  { name: "20 x Mithril Arrow",           level: 30, xp: 187  },
+  { name: "Mirkwood Crossbow Stock",     level: 30, xp: 224  },
+
+  // Level 40-60
+  { name: "20 x Maple Arrow Shaft",       level: 40, xp: 29.25 },
+  { name: "Maple Bow",                    level: 40, xp: 75.5 },
+  { name: "Ebony Crossbow",               level: 40, xp: 151  },
+  { name: "Unstrung Maple Bow",           level: 40, xp: 151  },
+  { name: "20 x Ebony Arrow",             level: 40, xp: 226  },
+  { name: "Maple Crossbow Stock",         level: 40, xp: 302  },
+
+  // Level 60-80
+  { name: "20 x Pine Arrow Shaft",        level: 60, xp: 35   },
+  { name: "Pine Bow",                     level: 60, xp: 120  },
+  { name: "Verdite Crossbow",             level: 60, xp: 240  },
+  { name: "Unstrung Pine Bow",            level: 60, xp: 240  },
+  { name: "20 x Verdite Arrow",           level: 60, xp: 315  },
+  { name: "Pine Crossbow Stock",          level: 60, xp: 480  },
+
+  // Level 80-100
+  { name: "20 x Moonwood Arrow Shaft",    level: 80, xp: 40   },
+  { name: "Moonwood Bow",                 level: 80, xp: 160  },
+  { name: "Tyrian Crossbow",              level: 80, xp: 320  },
+  { name: "Unstrung Moonwood Bow",        level: 80, xp: 320  },
+  { name: "20 x Tyrian Arrow",            level: 80, xp: 395  },
+  { name: "Moonwood Crossbow Stock",      level: 80, xp: 640  },
 ];
-
-const ITEMS = [];
-TIERS.forEach((t) => {
-  const W = t.wood, w = t.woodIcon, M = t.metal, m = M.toLowerCase();
-  const log = `${W} Log`;
-  const shaft = `${W} Arrow Shaft`;
-  const unstrung = `Unstrung ${W} Bow`;
-  const stock = `${W} Crossbow Stock`;
-
-  ITEMS.push(
-    // Arrows tab
-    { type: "arrows",    name: shaft,             icon: `${w}_arrow_shaft`,      level: t.level, xp: t.xp.shaft,    makes: 20, mats: { [log]: 1 } },
-    { type: "arrows",    name: `${M} Arrow`,      icon: `${m}_arrow`,            level: t.level, xp: t.xp.arrow,    makes: 20, mats: { [shaft]: 20, "Feather": 20, [`${M} Arrowhead`]: 20 } },
-    // Bows tab
-    { type: "bows",      name: unstrung,          icon: `unstrung_${w}_bow`,     level: t.level, xp: t.xp.unstrung, makes: 1,  mats: { [log]: 1 } },
-    { type: "bows",      name: `${W} Bow`,        icon: `${w}_bow`,              level: t.level, xp: t.xp.bow,      makes: 1,  mats: { [unstrung]: 1, "Bowstring": 1 } },
-    // Crossbows tab
-    { type: "crossbows", name: stock,             icon: `${w}_crossbow_stock`,   level: t.level, xp: t.xp.stock,    makes: 1,  mats: { [log]: 2 } },
-    { type: "crossbows", name: `${M} Crossbow`,   icon: `${m}_crossbow`,         level: t.level, xp: t.xp.crossbow, makes: 1,  mats: { [stock]: 1, [`${M} Crossbow Prod`]: 1, "Bowstring": 1 } },
-  );
-});
-
-// Icon fixes, if any break: "Item Name": "icon_name"
-const ICON_OVERRIDES = {};
-ITEMS.forEach((it) => { if (ICON_OVERRIDES[it.name]) it.icon = ICON_OVERRIDES[it.name]; });
-
-const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
 
 // Collapsible groups, by required level (min inclusive, max exclusive). Edit freely.
 const GROUPS = [
-  { min: 1,  max: 10,  label: "Fletch lvl 1-10" },
-  { min: 10, max: 20,  label: "Fletch lvl 10-20" },
-  { min: 20, max: 30,  label: "Fletch lvl 20-30" },
-  { min: 30, max: 40,  label: "Fletch lvl 30-40" },
-  { min: 40, max: 60,  label: "Fletch lvl 40-60" },
-  { min: 60, max: 80,  label: "Fletch lvl 60-80" },
-  { min: 80, max: 999, label: "Fletch lvl 80+" },
+  { min: 1,  max: 10,  label: "Fletching lvl 1-10" },
+  { min: 10, max: 20,  label: "Fletching lvl 10-20" },
+  { min: 20, max: 30,  label: "Fletching lvl 20-30" },
+  { min: 30, max: 40,  label: "Fletching lvl 30-40" },
+  { min: 40, max: 60,  label: "Fletching lvl 40-60" },
+  { min: 60, max: 80,  label: "Fletching lvl 60-80" },
+  { min: 80, max: 100, label: "Fletching lvl 80-100" },
 ];
 
-const CRAFT_TYPES = [
-  { id: "arrows",    label: "Arrows" },
-  { id: "bows",      label: "Bows" },
-  { id: "crossbows", label: "Crossbows" },
-];
+// Direct ingredients PER CRAFT, built from the tier + item name.
+function recipeFor(item) {
+  const tier = TIERS[item.level];
+  if (!tier) return {}; // unknown tier: treat as having no recipe instead of throwing
+  const { wood, metal } = tier;
+  const n = item.name;
+
+  if (n.endsWith("Arrow Shaft"))    return { [`${wood} Log`]: 1 };   // 1 log per batch of 20
+  if (n.startsWith("Unstrung"))     return { [`${wood} Log`]: 1 };   // 1 log
+  if (n.endsWith("Crossbow Stock")) return { [`${wood} Log`]: 2 };   // 2 logs
+
+  // Crossbow = stock + prod + string
+  if (n.endsWith("Crossbow")) {
+    return {
+      [`${wood} Crossbow Stock`]: 1,
+      [`${metal} Crossbow Prod`]: 1,
+      "Bowstring": 1,
+    };
+  }
+
+  // Arrow batch = 1 batch of shafts + 20 tips + 20 feathers
+  if (n.endsWith("Arrow")) {
+    return {
+      [`20 x ${wood} Arrow Shaft`]: 1,
+      [`${metal} Arrowhead`]: 20,
+      "Feather": 20,
+    };
+  }
+
+  // Strung bow = unstrung bow + string
+  if (n.endsWith("Bow")) {
+    return { [`Unstrung ${wood} Bow`]: 1, "Bowstring": 1 };
+  }
+
+  return {};
+}
+
+// ---------- Icons ----------
+
+// Default: "Moonwood Bow" -> "moonwood_bow", "20 x Birch Arrow Shaft" -> "birch_arrow_shaft"
+function slug(name) {
+  return name
+    .replace(/^\d+\s*x\s*/i, "")        // drop "20 x " batch prefix
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+// Only add entries here where the real asset name differs from slug(name).
+// Check your /assets/wiki/items/ folder and correct any that are wrong.
+const ICON_OVERRIDES = {
+  // "20 x Bronze Arrow": "bronze_arrow",
+  // "Unstrung Birch Bow": "birch_bow_u",
+
+  // Mirkwood items still use the old "swampwood" icon files on the wiki
+  "20 x Mirkwood Arrow Shaft": "swampwood_arrow_shaft",
+  "Mirkwood Bow":              "swampwood_bow",
+  "Unstrung Mirkwood Bow":     "unstrung_swampwood_bow",
+  "Mirkwood Crossbow Stock":   "swampwood_crossbow_stock",
+};
+
+function iconFor(name) {
+  return ICON_OVERRIDES[name] ?? slug(name);
+}
+
+// Raw materials (logs, prods, tips, feathers, string)
+const RAW_ICON_OVERRIDES = {
+  "Bowstring": "bowstring",
+  "Feather": "feather",
+  "Mirkwood Log": "swampwood_log",
+};
+
+function rawIconId(name) {
+  if (RAW_ICON_OVERRIDES[name]) return RAW_ICON_OVERRIDES[name];
+  return slug(name); // "Birch Log" -> "birch_log", "Bronze Arrowtips" -> "bronze_arrowtips"
+}
+
+function rawIconImg(name) {
+  return `<img class="item-icon" src="${ICON_BASE}${rawIconId(name)}.webp" alt="" width="24" height="24"
+    onerror="this.replaceWith(document.createTextNode('?'))" />`;
+}
+
+const ITEMS = BASE_ITEMS.map((it) => ({
+  ...it,
+  icon: iconFor(it.name),
+  mats: recipeFor(it),
+}));
+const ITEM_BY_NAME = Object.fromEntries(ITEMS.map((it) => [it.name, it]));
 
 // ---------- Materials calculation ----------
 
-// Expand `matName` x `qty`. Intermediates the plan already produces (shafts, unstrung
-// bows, stocks) are consumed first; only the shortfall expands into raw materials.
-// An intermediate that makes 20 per craft needs ceil(shortfall / 20) extra crafts.
+// Expand `matName` x `qty`. Intermediates the plan already produces (in `produced`)
+// are consumed first; only the shortfall is expanded into raw materials.
 function addRawMats(totals, produced, matName, qty) {
   const sub = ITEM_BY_NAME[matName];
   if (sub && Object.keys(sub.mats).length) {
@@ -121,11 +200,8 @@ function addRawMats(totals, produced, matName, qty) {
     produced[matName] = available - used;
     const shortfall = qty - used;
     if (shortfall > 0) {
-      const crafts = Math.ceil(shortfall / sub.makes);
-      // Leftovers from rounding up (e.g. 20 shafts per craft) stay available
-      produced[matName] += crafts * sub.makes - shortfall;
       for (const [m, perCraft] of Object.entries(sub.mats)) {
-        addRawMats(totals, produced, m, perCraft * crafts);
+        addRawMats(totals, produced, m, perCraft * shortfall);
       }
     }
   } else {
@@ -133,12 +209,17 @@ function addRawMats(totals, produced, matName, qty) {
   }
 }
 
-// `planItems` = [{ item, count }] where count = crafts. Returns raw material totals.
+// `planItems` = [{ item, count }] for the whole plan. Returns raw material totals.
+//
+// Why this doesn't double count: every planned item's own ingredients are expanded
+// exactly once here (the loop below). When a consumer needs an intermediate that is
+// also in the plan, addRawMats takes it from `produced` instead of expanding it again.
+// Only the shortfall (intermediates you did NOT plan enough of) expands to raws.
 function planRawMats(planItems) {
   const totals = {};
   const produced = {};
   planItems.forEach(({ item, count }) => {
-    produced[item.name] = (produced[item.name] || 0) + count * item.makes;
+    produced[item.name] = (produced[item.name] || 0) + count;
   });
 
   planItems.forEach(({ item, count }) => {
@@ -185,12 +266,13 @@ export function wireMatsInputs(resultsRoot) {
 
 // ---------- UI ----------
 
+// Module-level state for the single rendered instance
 let root = null;
-let activeType = "arrows";
 let lastLevel = null;
 
-// Crafts-per-round ratios the user typed, keyed by item index.
-const savedRatios = new Map();
+// Percentages the user has typed, keyed by item index. Preserved across rebuilds
+// so ticking another item doesn't wipe a tuned split.
+const savedShares = new Map();
 
 const q = (sel) => root.querySelector(sel);
 const qa = (sel) => [...root.querySelectorAll(sel)];
@@ -198,11 +280,15 @@ const qa = (sel) => [...root.querySelectorAll(sel)];
 const selectedIndexes = () =>
   qa(".itemCheck:checked").map((c) => parseInt(c.value, 10));
 
+// "xp" = split by XP percentage, "equal" = same craft count for every item (game style)
+const splitMode = () => q('input[name="splitMode"]:checked')?.value ?? "xp";
+
 function updateSelectedCount() {
   const el = q(".selectedCount");
   if (el) el.textContent = `${selectedIndexes().length} selected`;
 }
 
+// Refresh the "(selected/total)" counter in every group header
 function updateGroupCounts() {
   qa(".group").forEach((g) => {
     const boxes = [...g.querySelectorAll(".itemCheck")];
@@ -211,40 +297,71 @@ function updateGroupCounts() {
   });
 }
 
-function rebuildRatioInputs() {
+function updateMixTotal() {
+  const mixTotal = q(".mixTotal");
+  const sum = qa(".mixInput").reduce((s, el) => s + (parseFloat(el.value) || 0), 0);
+  const ok = Math.abs(sum - 100) <= 0.05;
+  mixTotal.textContent = `Total: ${sum.toFixed(1)}%` + (ok ? " ✅" : " (should be 100%)");
+  mixTotal.classList.toggle("error", !ok);
+}
+
+// Even split: 100 / number of selected items. If the user has already typed values for
+// every currently selected item and they still add up to 100, keep them instead.
+function rebuildMixInputs() {
   updateSelectedCount();
 
   const mixSection = q(".mixSection");
   const mixInputs = q(".mixInputs");
   const idx = selectedIndexes();
 
-  qa(".ratioInput").forEach((el) => {
-    savedRatios.set(parseInt(el.dataset.item, 10), el.value);
+  // Remember whatever is currently typed before wiping the rows
+  qa(".mixInput").forEach((el) => {
+    savedShares.set(parseInt(el.dataset.item, 10), parseFloat(el.value) || 0);
   });
 
   mixInputs.innerHTML = "";
 
-  if (idx.length < 2) {
+  // Equal-crafts mode needs no percentages
+  if (idx.length < 2 || splitMode() === "equal") {
     mixSection.hidden = true;
     return;
   }
   mixSection.hidden = false;
 
-  idx.forEach((i) => {
-    const value = savedRatios.has(i) ? savedRatios.get(i) : 1;
+  const hasAllSaved = idx.every((i) => savedShares.has(i));
+  const savedSum = idx.reduce((s, i) => s + (savedShares.get(i) || 0), 0);
+  const keepSaved = hasAllSaved && Math.abs(savedSum - 100) <= 0.05;
+
+  // Even split; last row takes the rounding remainder
+  const even = Math.round((100 / idx.length) * 10) / 10;
+
+  idx.forEach((i, n) => {
+    let value;
+    if (keepSaved) {
+      value = savedShares.get(i);
+    } else {
+      value = n === idx.length - 1
+        ? Math.round((100 - even * (idx.length - 1)) * 10) / 10
+        : even;
+    }
+
     const row = document.createElement("label");
     row.className = "mix-row";
-    row.innerHTML = `<span>${iconImg(ITEMS[i])}${ITEMS[i].name}</span>
-      <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts</span>`;
+    row.innerHTML = `<span>${ITEMS[i].name}</span>
+      <span><input type="number" class="mixInput" data-item="${i}" min="0" max="100" step="0.1" value="${value}" placeholder="0" /> %</span>`;
     mixInputs.appendChild(row);
   });
+
+  qa(".mixInput").forEach((el) => el.addEventListener("input", updateMixTotal));
+  updateMixTotal();
 }
 
 function onSelectionChange() {
   updateGroupCounts();
-  rebuildRatioInputs();
+  rebuildMixInputs();
 }
 
+// Select all / clear only affect items currently visible (respects the filter box)
 function setVisibleItems(state) {
   qa(".item-row").forEach((label) => {
     if (label.hidden) return;
@@ -253,6 +370,7 @@ function setVisibleItems(state) {
   onSelectionChange();
 }
 
+// Per-group shortcut (also respects the filter box)
 function setGroupItems(groupEl, state) {
   groupEl.querySelectorAll(".item-row").forEach((label) => {
     if (label.hidden) return;
@@ -274,11 +392,13 @@ function applyFilter() {
       if (match) anyVisible = true;
     });
 
+    // Hide groups with no matches; auto-open groups with matches while filtering
     g.hidden = !anyVisible;
     if (term !== "") {
       if (g.dataset.userOpen === undefined) g.dataset.userOpen = g.open ? "1" : "0";
       g.open = anyVisible;
     } else if (g.dataset.userOpen !== undefined) {
+      // Filter cleared: restore whatever state the group had before filtering
       g.open = g.dataset.userOpen === "1";
       delete g.dataset.userOpen;
     }
@@ -286,90 +406,10 @@ function applyFilter() {
 }
 
 function applyLevelHint(level) {
-  if (!root || level === null) return;
   qa(".item-row").forEach((label) => {
     const item = ITEMS[parseInt(label.dataset.index, 10)];
     label.classList.toggle("above-level", level < item.level);
   });
-}
-
-function renderGroups() {
-  const groupsEl = q(".groups");
-  groupsEl.innerHTML = "";
-
-  GROUPS.forEach((grp) => {
-    const indexes = [];
-    ITEMS.forEach((item, i) => {
-      if (item.type !== activeType) return;
-      if (item.level < grp.min || item.level >= grp.max) return;
-      indexes.push(i);
-    });
-
-    if (indexes.length === 0) return;
-
-    const details = document.createElement("details");
-    details.className = "group";
-
-    details.innerHTML = `
-      <summary>
-        <span class="group-label">${grp.label}</span>
-        <span class="group-count"></span>
-        <span class="group-actions">
-          <button type="button" class="groupAllBtn">all</button>
-          <button type="button" class="groupNoneBtn">none</button>
-        </span>
-      </summary>
-      <div class="ore-grid"></div>`;
-
-    const grid = details.querySelector(".ore-grid");
-
-    indexes.forEach((i) => {
-      const item = ITEMS[i];
-      const per = item.makes > 1 ? ` · makes ${item.makes}` : "";
-      const label = document.createElement("label");
-      label.className = "ore-item item-row";
-      label.dataset.index = i;
-      label.innerHTML = `
-        <input type="checkbox" class="itemCheck" value="${i}" />
-        <span class="ore-name">${iconImg(item)}${item.name}</span>
-        <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP${per}</span>`;
-      grid.appendChild(label);
-    });
-
-    const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
-    details.querySelector(".groupAllBtn").addEventListener("click", (e) => {
-      stop(e);
-      setGroupItems(details, true);
-    });
-    details.querySelector(".groupNoneBtn").addEventListener("click", (e) => {
-      stop(e);
-      setGroupItems(details, false);
-    });
-
-    groupsEl.appendChild(details);
-  });
-
-  qa(".itemCheck").forEach((c) => c.addEventListener("change", onSelectionChange));
-
-  const first = q(".group");
-  if (first) first.open = true;
-
-  applyFilter();
-  applyLevelHint(lastLevel);
-  onSelectionChange();
-}
-
-function setActiveType(type) {
-  if (type === activeType) return;
-  activeType = type;
-
-  qa(".craftTab").forEach((btn) => {
-    const on = btn.dataset.type === activeType;
-    btn.classList.toggle("active", on);
-    btn.setAttribute("aria-selected", on ? "true" : "false");
-  });
-
-  renderGroups();
 }
 
 // ---------- Result builders ----------
@@ -378,50 +418,80 @@ function usableCell(currentLevel, item) {
   return currentLevel >= item.level ? "✅" : "❌ Lv " + item.level;
 }
 
-function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
-  const ratios = selected.map(({ i }) => {
-    const el = q(`.ratioInput[data-item="${i}"]`);
-    const r = Math.floor(parseFloat(el?.value));
-    return Number.isFinite(r) && r > 0 ? r : 0;
-  });
-
+// Same craft count N for every selected item (matches the in-game combo plan).
+// N is the smallest whole number where combined XP reaches the target.
+function equalPlanHtml(selected, xpNeeded, currentLevel, log, title) {
   const xpPerRound = selected.reduce(
-    (s, { item }, n) => s + ratios[n] * xpWithBonus(item.xp, log.bonus), 0);
+    (s, { item }) => s + xpWithBonus(item.xp, log.bonus), 0);
+  const N = Math.ceil(xpNeeded / xpPerRound);
 
-  if (xpPerRound <= 0) {
-    return `<p class="error" role="alert">Set at least one item to 1 or more crafts per round.</p>`;
-  }
-
-  const rounds = Math.ceil(xpNeeded / xpPerRound);
   const planItems = [];
-  let totalCrafts = 0;
-
   let html = `
-    <h3>Combined plan (${title})</h3>
-    <p class="note">${fmt(rounds)} round${rounds === 1 ? "" : "s"} of the ratio below.</p>
+    <h3>Combined plan (${title}), equal crafts</h3>
     <table>
-      <tr><th>Item</th><th>Per round</th><th>XP each</th><th>Crafts needed</th><th>Items made</th><th>XP from item</th><th>Usable?</th></tr>`;
+      <tr><th>Item</th><th>XP each</th><th>Crafts needed</th><th>XP from item</th><th>Usable?</th></tr>`;
 
-  selected.forEach(({ item }, n) => {
+  selected.forEach(({ item }) => {
     const xpEach = xpWithBonus(item.xp, log.bonus);
-    const count = ratios[n] * rounds;
-    totalCrafts += count;
-    planItems.push({ item, count });
+    planItems.push({ item, count: N });
     html += `
       <tr>
         <td>${iconImg(item)}${item.name}</td>
-        <td>${ratios[n]}</td>
         <td>${fmt(xpEach)}</td>
-        <td>${fmt(count)}</td>
-        <td>${fmt(count * item.makes)}</td>
-        <td>${fmt(xpEach * count)}</td>
+        <td>${fmt(N)}</td>
+        <td>${fmt(xpEach * N)}</td>
         <td>${usableCell(currentLevel, item)}</td>
       </tr>`;
   });
 
   html += `
-      <tr><td colspan="3"><strong>Total crafts</strong></td>
-      <td><strong>${fmt(totalCrafts)}</strong></td><td></td><td></td><td></td></tr>
+      <tr><td colspan="2"><strong>Total crafts</strong></td>
+      <td><strong>${fmt(N * selected.length)}</strong></td><td></td><td></td></tr>
+    </table>`;
+
+  html += matsTable(planRawMats(planItems), "Materials needed (combined plan)");
+  return html;
+}
+
+// Each item gets a chosen percentage of the XP; craft counts differ per item.
+function sharePlanHtml(selected, xpNeeded, currentLevel, log, title) {
+  const shares = selected.map(({ i }) => {
+    const el = q(`.mixInput[data-item="${i}"]`);
+    return parseFloat(el?.value) || 0;
+  });
+  const shareSum = shares.reduce((a, b) => a + b, 0);
+
+  if (Math.abs(shareSum - 100) > 0.05) {
+    return `<p class="error" role="alert">The XP split must add up to 100% (currently ${shareSum.toFixed(1)}%).</p>`;
+  }
+
+  let totalItems = 0;
+  const planItems = [];
+
+  let html = `
+    <h3>Combined plan (${title})</h3>
+    <table>
+      <tr><th>Item</th><th>Share</th><th>XP from item</th><th>XP each</th><th>Crafts needed</th><th>Usable?</th></tr>`;
+
+  selected.forEach(({ item }, n) => {
+    const xpEach = xpWithBonus(item.xp, log.bonus);
+    const xpShare = xpNeeded * (shares[n] / 100);
+    const count = shares[n] > 0 ? Math.ceil(xpShare / xpEach) : 0;
+    totalItems += count;
+    planItems.push({ item, count });
+    html += `
+      <tr>
+        <td>${iconImg(item)}${item.name}</td>
+        <td>${shares[n]}%</td>
+        <td>${fmt(xpShare)}</td>
+        <td>${fmt(xpEach)}</td>
+        <td>${fmt(count)}</td>
+        <td>${usableCell(currentLevel, item)}</td>
+      </tr>`;
+  });
+
+  html += `
+      <tr><td colspan="4"><strong>Total crafts</strong></td><td><strong>${fmt(totalItems)}</strong></td><td></td></tr>
     </table>`;
 
   html += matsTable(planRawMats(planItems), "Materials needed (combined plan)");
@@ -430,27 +500,27 @@ function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
 
 function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
   let html = `
-    <h3>If you fletch only one item (${title})</h3>
+    <h3>If you craft only one item (${title})</h3>
     <table>
-      <tr><th>Item</th><th>Req. Lv</th><th>Base XP</th><th>XP w/ logs</th><th>Crafts needed</th><th>Items made</th><th>Usable?</th></tr>`;
+      <tr><th>Item</th><th>Req. Lv</th><th>Base XP</th><th>XP w/ logs</th><th>Crafts needed</th><th>Usable?</th></tr>`;
 
   selected.forEach(({ item }) => {
     const xpEach = xpWithBonus(item.xp, log.bonus);
-    const crafts = Math.ceil(xpNeeded / xpEach);
     html += `
       <tr>
         <td>${iconImg(item)}${item.name}</td>
         <td>${item.level}</td>
         <td>${fmt(item.xp)}</td>
         <td>${fmt(xpEach)}</td>
-        <td>${fmt(crafts)}</td>
-        <td>${fmt(crafts * item.makes)}</td>
+        <td>${fmt(Math.ceil(xpNeeded / xpEach))}</td>
         <td>${usableCell(currentLevel, item)}</td>
       </tr>`;
   });
 
   html += `</table>`;
 
+  // With exactly one item selected there is no combined plan,
+  // so show that item's materials here instead.
   if (selected.length === 1) {
     const { item } = selected[0];
     const xpEach = xpWithBonus(item.xp, log.bonus);
@@ -472,75 +542,123 @@ export const fletching = {
 
   renderTask(container) {
     root = container;
-    activeType = "arrows";
-    savedRatios.clear();
+    savedShares.clear();
 
     root.innerHTML = `
-      <div class="craft-tabs" role="tablist">
-        ${CRAFT_TYPES.map((t) => `
-          <button type="button" role="tab"
-            class="craftTab ${t.id === activeType ? "active" : ""}"
-            data-type="${t.id}"
-            aria-selected="${t.id === activeType}">${t.label}</button>`).join("")}
-      </div>
       <div class="ore-actions">
         <input type="search" class="itemFilter" aria-label="Filter items"
-               placeholder="Filter items (e.g. shaft, maple, tyrian)..." />
+               placeholder="Filter items (e.g. maple, crossbow, arrow)..." />
         <button type="button" class="selectAllBtn">Select all</button>
         <button type="button" class="clearBtn">Clear</button>
         <span class="selectedCount">0 selected</span>
       </div>
       <div class="groups"></div>
+      <div class="modeRow">
+        <label><input type="radio" name="splitMode" value="xp" checked /> Split by XP %</label>
+        <label><input type="radio" name="splitMode" value="equal" /> Equal crafts (like the game)</label>
+      </div>
       <div class="mixSection" hidden>
-        <h3>Crafts per round</h3>
-        <p class="note">Set how many of each item to craft per round. Leave everything
-          at 1 for equal crafts. One shaft craft makes 20 shafts, enough for one arrow craft.</p>
+        <h3>XP split</h3>
         <div class="mixInputs"></div>
-        <button type="button" class="resetRatiosBtn">Reset all to 1</button>
+        <div class="mixTotal"></div>
       </div>`;
 
-    qa(".craftTab").forEach((btn) =>
-      btn.addEventListener("click", () => setActiveType(btn.dataset.type))
-    );
+    const groupsEl = q(".groups");
+
+    GROUPS.forEach((grp) => {
+      const details = document.createElement("details");
+      details.className = "group";
+
+      details.innerHTML = `
+        <summary>
+          <span class="group-label">${grp.label}</span>
+          <span class="group-count"></span>
+          <span class="group-actions">
+            <button type="button" class="groupAllBtn">all</button>
+            <button type="button" class="groupNoneBtn">none</button>
+          </span>
+        </summary>
+        <div class="ore-grid"></div>`;
+
+      const grid = details.querySelector(".ore-grid");
+
+      ITEMS.forEach((item, i) => {
+        if (item.level < grp.min || item.level >= grp.max) return;
+
+        const label = document.createElement("label");
+        label.className = "ore-item item-row";
+        label.dataset.index = i;
+        label.innerHTML = `
+          <input type="checkbox" class="itemCheck" value="${i}" />
+          <span class="ore-name">${iconImg(item)}${item.name}</span>
+          <span class="ore-meta">Req. Lv ${item.level} · ${item.xp} XP</span>`;
+        grid.appendChild(label);
+      });
+
+      // Buttons live inside <summary>: stop clicks from toggling the dropdown
+      const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+      details.querySelector(".groupAllBtn").addEventListener("click", (e) => {
+        stop(e);
+        setGroupItems(details, true);
+      });
+      details.querySelector(".groupNoneBtn").addEventListener("click", (e) => {
+        stop(e);
+        setGroupItems(details, false);
+      });
+
+      groupsEl.appendChild(details);
+    });
+
+    qa(".itemCheck").forEach((c) => c.addEventListener("change", onSelectionChange));
+    qa('input[name="splitMode"]').forEach((r) => r.addEventListener("change", rebuildMixInputs));
     q(".itemFilter").addEventListener("input", applyFilter);
     q(".selectAllBtn").addEventListener("click", () => setVisibleItems(true));
     q(".clearBtn").addEventListener("click", () => setVisibleItems(false));
-    q(".resetRatiosBtn").addEventListener("click", () => {
-      savedRatios.clear();
-      qa(".ratioInput").forEach((el) => { el.value = 1; });
-    });
 
-    renderGroups();
+    // Open the first group by default so the panel isn't just a column of headers
+    const first = q(".group");
+    if (first) first.open = true;
+
+    updateGroupCounts();
+    updateSelectedCount();
+
+    // Apply the level hint right away if the level is already known
+    if (lastLevel !== null) applyLevelHint(lastLevel);
   },
 
+  // Visual hint (not a lock) for items above the current level
   onLevelChange(level) {
     lastLevel = level;
     if (!root) return;
     applyLevelHint(level);
   },
 
-  // After inserting the returned HTML into the page, call wireMatsInputs(resultsElement).
+  // Returns an HTML string for the results panel.
+  // After inserting it into the page, call wireMatsInputs(resultsElement).
   calculate({ xpNeeded, currentLevel, log }) {
     const selected = selectedIndexes().map((i) => ({ item: ITEMS[i], i }));
 
     if (selected.length === 0) {
-      return `<p class="note">Select at least one item to see how many you need.</p>`;
+      return `<p class="note">Select at least one item in step 3 to see how many you need.</p>`;
     }
 
     const title = `${log.name}${log.bonus ? ` +${log.bonus}%` : ""}`;
     let html = "";
 
+    // ----- Combined plan (2+ items) -----
     if (selected.length > 1) {
-      html += ratioPlanHtml(selected, xpNeeded, currentLevel, log, title);
+      html += splitMode() === "equal"
+        ? equalPlanHtml(selected, xpNeeded, currentLevel, log, title)
+        : sharePlanHtml(selected, xpNeeded, currentLevel, log, title);
     }
 
+    // ----- Single-item breakdown -----
     html += singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title);
 
     html += `
-      <p class="note">Craft counts round up, so totals can overshoot your target by up
-      to one round's worth of XP. Materials include the shafts, unstrung bows and stocks
-      you fletch yourself; if you plan those crafts too, they are counted first.
-      Bowstrings, arrowheads and crossbow prods come from Crafting and Smithing.</p>`;
+      <p class="note">Craft counts round up, so totals can overshoot your target by up to
+      one craft's worth of XP per item. Items marked "20 x" are batches: one craft
+      produces 20 and the XP shown is per batch.</p>`;
 
     return html;
   },
