@@ -13,7 +13,7 @@ function iconImg(item, size = 24) {
 }
 
 
-// Potion data transcribed from the Alchemy table screenshots.
+// Potion levels and XP from the wiki data (wiki.v1.json, recipes with skill 10).
 // Each recipe = 1 herb + N secondary ingredients, made at the Alchemy table.
 // `inputs` is the recipe for ONE potion.
 const ITEMS = [
@@ -21,51 +21,51 @@ const ITEMS = [
   { name: "Red Mushroom", level: 1, xp: 5, inputs: {}, kind: "gather" },
 
   // Tier I
-  { name: "Health Potion I",                 level: 1,  xp: 45,  inputs: { "Wildleaf": 1, "Red Mushroom": 1 } },
-  { name: "Mana Regen Potion I",             level: 3,  xp: 51,  inputs: { "Wildleaf": 1, "Crystal": 1 } },
-  { name: "Anti-venom I (Adder Venom)",      level: 5,  xp: 59,  inputs: { "Wildleaf": 1, "Adder Venom": 1 } },
-  { name: "Anti-venom I (Briar Wasp Sting)", level: 5,  xp: 59,  inputs: { "Wildleaf": 1, "Briar Wasp Sting": 1 } },
-  { name: "Mana Potion I",                   level: 5,  xp: 59,  inputs: { "Wildleaf": 1, "Crystal": 1 } },
-  { name: "Strength Potion I",               level: 9,  xp: 78,  inputs: { "Wildleaf": 1, "Goblin Fang": 1 } },
-  { name: "Dexterity Potion I",              level: 13, xp: 105, inputs: { "Wildleaf": 1, "Stag Antler": 1 } },
-  { name: "Magic Potion I",                  level: 17, xp: 135, inputs: { "Wildleaf": 1, "Hex Bead": 1 } },
+  { name: "Health Potion I",                 level: 1,  xp: 45,    inputs: { "Wildleaf": 1, "Red Mushroom": 1 } },
+  { name: "Mana Regen Potion I",             level: 1,  xp: 51.5,  inputs: { "Wildleaf": 1, "Crystal": 1 } },
+  { name: "Anti-venom I (Adder Venom)",      level: 1,  xp: 59.5,  inputs: { "Wildleaf": 1, "Adder Venom": 1 } },
+  { name: "Anti-venom I (Briar Wasp Sting)", level: 1,  xp: 59.5,  inputs: { "Wildleaf": 1, "Briar Wasp Sting": 1 } },
+  { name: "Mana Potion I",                   level: 1,  xp: 59.5,  inputs: { "Wildleaf": 1, "Crystal": 1 } },
+  { name: "Strength Potion I",               level: 1,  xp: 78.5,  inputs: { "Wildleaf": 1, "Goblin Fang": 1 } },
+  { name: "Dexterity Potion I",              level: 1,  xp: 105,   inputs: { "Wildleaf": 1, "Stag Antler": 1 } },
+  { name: "Magic Potion I",                  level: 1,  xp: 135,   inputs: { "Wildleaf": 1, "Hex Bead": 1 } },
 
   // Tier II
-  { name: "Health Potion II",                level: 21, xp: 180, inputs: { "Vervain": 1, "Red Mushroom": 2 } },
-  { name: "Mana Regen Potion II",            level: 23, xp: 190, inputs: { "Vervain": 1, "Crystal": 2 } },
-  { name: "Anti-venom II (Ettercap Venom)",  level: 25, xp: 205, inputs: { "Vervain": 1, "Ettercap Venom": 1 } },
-  { name: "Anti-venom II (Fen Viper Venom)", level: 25, xp: 205, inputs: { "Vervain": 1, "Fen Viper Venom": 1 } },
-  { name: "Mana Potion II",                  level: 25, xp: 205, inputs: { "Vervain": 1, "Crystal": 2 } },
-  { name: "Strength Potion II",              level: 29, xp: 235, inputs: { "Vervain": 1, "Aurach Horn": 1 } },
-  { name: "Dexterity Potion II",             level: 33, xp: 270, inputs: { "Vervain": 1, "Ettercap Leg": 1 } },
-  { name: "Magic Potion II",                 level: 37, xp: 305, inputs: { "Vervain": 1, "Witch's Eye": 1 } },
+  { name: "Health Potion II",                level: 20, xp: 171,   inputs: { "Vervain": 1, "Red Mushroom": 2 } },
+  { name: "Mana Regen Potion II",            level: 20, xp: 180.5, inputs: { "Vervain": 1, "Crystal": 2 } },
+  { name: "Anti-venom II (Ettercap Venom)",  level: 20, xp: 194.5, inputs: { "Vervain": 1, "Ettercap Venom": 1 } },
+  { name: "Anti-venom II (Fen Viper Venom)", level: 20, xp: 194.5, inputs: { "Vervain": 1, "Fen Viper Venom": 1 } },
+  { name: "Mana Potion II",                  level: 20, xp: 194.5, inputs: { "Vervain": 1, "Crystal": 2 } },
+  { name: "Strength Potion II",              level: 20, xp: 223,   inputs: { "Vervain": 1, "Aurach Horn": 1 } },
+  { name: "Dexterity Potion II",             level: 20, xp: 256.25, inputs: { "Vervain": 1, "Ettercap Leg": 1 } },
+  { name: "Magic Potion II",                 level: 20, xp: 289.5, inputs: { "Vervain": 1, "Witch's Eye": 1 } },
 
   // Tier III
-  { name: "Health Potion III",               level: 41, xp: 350, inputs: { "Moonbloom": 1, "Red Mushroom": 3 } },
-  { name: "Mana Regen Potion III",           level: 43, xp: 365, inputs: { "Moonbloom": 1, "Crystal": 3 } },
-  { name: "Anti-venom III",                  level: 45, xp: 380, inputs: { "Moonbloom": 1, "Seep Venom": 1 } },
-  { name: "Mana Potion III",                 level: 45, xp: 380, inputs: { "Moonbloom": 1, "Crystal": 3 } },
-  { name: "Strength Potion III",             level: 49, xp: 415, inputs: { "Moonbloom": 1, "Bear Claw": 1 } },
-  { name: "Dexterity Potion III",            level: 53, xp: 455, inputs: { "Moonbloom": 1, "Seep Spider Leg": 1 } },
-  { name: "Magic Potion III",                level: 57, xp: 495, inputs: { "Moonbloom": 1, "Swamp Dragon Heart": 1 } },
+  { name: "Health Potion III",               level: 40, xp: 341,   inputs: { "Moonbloom": 1, "Red Mushroom": 3 } },
+  { name: "Mana Regen Potion III",           level: 40, xp: 355.5, inputs: { "Moonbloom": 1, "Crystal": 3 } },
+  { name: "Anti-venom III",                  level: 40, xp: 370.25, inputs: { "Moonbloom": 1, "Seep Venom": 1 } },
+  { name: "Mana Potion III",                 level: 40, xp: 370.25, inputs: { "Moonbloom": 1, "Crystal": 3 } },
+  { name: "Strength Potion III",             level: 40, xp: 404.25, inputs: { "Moonbloom": 1, "Bear Claw": 1 } },
+  { name: "Dexterity Potion III",            level: 40, xp: 443.25, inputs: { "Moonbloom": 1, "Seep Spider Leg": 1 } },
+  { name: "Magic Potion III",                level: 40, xp: 482.25, inputs: { "Moonbloom": 1, "Swamp Dragon Heart": 1 } },
 
   // Tier IV
-  { name: "Health Potion IV",                level: 61, xp: 540, inputs: { "Embersage": 1, "Red Mushroom": 4 } },
-  { name: "Mana Regen Potion IV",            level: 63, xp: 555, inputs: { "Embersage": 1, "Crystal": 4 } },
-  { name: "Mana Potion IV",                  level: 65, xp: 570, inputs: { "Embersage": 1, "Crystal": 4 } },
-  { name: "Strength Potion IV",              level: 69, xp: 605, inputs: { "Embersage": 1, "Small Dragon Fang": 1 } },
-  { name: "Dexterity Potion IV",             level: 73, xp: 640, inputs: { "Embersage": 1, "Stag Antler": 1 } },
-  { name: "Magic Potion IV",                 level: 77, xp: 680, inputs: { "Embersage": 1, "Green Dragon Heart": 1 } },
+  { name: "Health Potion IV",                level: 60, xp: 540,   inputs: { "Embersage": 1, "Red Mushroom": 4 } },
+  { name: "Mana Regen Potion IV",            level: 60, xp: 555,   inputs: { "Embersage": 1, "Crystal": 4 } },
+  { name: "Mana Potion IV",                  level: 60, xp: 570,   inputs: { "Embersage": 1, "Crystal": 4 } },
+  { name: "Strength Potion IV",              level: 60, xp: 605,   inputs: { "Embersage": 1, "Small Dragon Fang": 1 } },
+  { name: "Dexterity Potion IV",             level: 60, xp: 640,   inputs: { "Embersage": 1, "Stag Antler": 1 } },
+  { name: "Magic Potion IV",                 level: 60, xp: 680,   inputs: { "Embersage": 1, "Green Dragon Heart": 1 } },
 ];
 
 // Collapsible groups. Gathering is matched by `kind`, the rest by required level
 // (min inclusive, max exclusive).
 const GROUPS = [
   { kind: "gather", label: "Gathering" },
-  { min: 1,  max: 21, label: "Potions lvl 1-21 (Tier I)" },
-  { min: 21, max: 41, label: "Potions lvl 21-41 (Tier II)" },
-  { min: 41, max: 61, label: "Potions lvl 41-61 (Tier III)" },
-  { min: 61, max: 81, label: "Potions lvl 61-81 (Tier IV)" },
+  { min: 1,  max: 20, label: "Potions lvl 1 (Tier I)" },
+  { min: 20, max: 40, label: "Potions lvl 20 (Tier II)" },
+  { min: 40, max: 60, label: "Potions lvl 40 (Tier III)" },
+  { min: 60, max: 80, label: "Potions lvl 60 (Tier IV)" },
 ];
 
 // Auto-generate icon names like "health_potion_i" from "Health Potion I".
