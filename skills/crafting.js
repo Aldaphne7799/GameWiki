@@ -487,18 +487,19 @@ function updateSelectedCount() {
 
 // ---------- Crafts per round ----------
 
-// The number typed in item i's "crafts per round" box (default 1)
+// The number typed in item i's "crafts per round" box (empty = 0)
 function typedRatio(i) {
   const el = q(`.ratioInput[data-item="${i}"]`);
-  const raw = el ? el.value : (savedRatios.has(i) ? savedRatios.get(i) : 1);
+  const raw = el ? el.value : (savedRatios.has(i) ? savedRatios.get(i) : "");
   const r = Math.floor(parseFloat(raw));
   return Number.isFinite(r) && r > 0 ? r : 0;
 }
 
 // Ratios for the selected items, as Map(index -> crafts per round).
-// Cloth/leather left at 1: the calculation uses exactly what your selected gear
-// uses per round (e.g. 1 Facemask + 1 Robe Top = 2 + 5 = 7 Sunthread Cloth).
-// Change it to anything other than 1 and your own number is used instead.
+// Crafts per round is optional. Gear left empty is not in the combined plan.
+// Cloth/leather left empty: the calculation uses exactly what your gear uses per
+// round (e.g. 1 Facemask + 1 Robe Top = 2 + 5 = 7 Sunthread Cloth).
+// Type a number for it and your own number is used instead.
 function computeRatios(idx) {
   const res = new Map();
   idx.forEach((i) => {
@@ -515,7 +516,7 @@ function computeRatios(idx) {
       const per = gear.mats[base.name];
       if (per) need += per * res.get(j);
     });
-    res.set(i, typed === 1 && need > 0 ? need : typed);
+    res.set(i, typed === 0 && need > 0 ? need : typed);
   });
   return res;
 }
@@ -529,7 +530,7 @@ function updateGroupCounts() {
 }
 
 // Rebuild the "Crafts per round" rows for the current selection.
-// Default ratio is 1 for every item (= equal crafts); typed values are remembered.
+// Boxes start empty (optional); typed values are remembered.
 function rebuildRatioInputs() {
   updateSelectedCount();
 
@@ -551,11 +552,11 @@ function rebuildRatioInputs() {
   mixSection.hidden = false;
 
   idx.forEach((i) => {
-    const value = savedRatios.has(i) ? savedRatios.get(i) : 1;
+    const value = savedRatios.has(i) ? savedRatios.get(i) : "";
     const row = document.createElement("label");
     row.className = "mix-row";
     row.innerHTML = `<span>${iconImg(ITEMS[i])}${ITEMS[i].name}</span>
-      <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="0" /> crafts</span>`;
+      <span><input type="number" class="ratioInput" data-item="${i}" min="0" step="1" value="${value}" placeholder="-" /> crafts</span>`;
     mixInputs.appendChild(row);
   });
 }
@@ -716,7 +717,7 @@ function usableCell(currentLevel, item) {
 
 // Each selected item has a ratio r (crafts per round). One round yields
 // sum(r * xpEach) XP. R = smallest whole number of rounds that reaches the target.
-// Crafts per item = r * R. With every ratio at 1 this is the old "equal crafts" plan.
+// Crafts per item = r * R. Only shown once at least one box has a number.
 // Cloth/leather left at 1 is crafted in exactly the amount your gear uses
 // (see computeRatios); any other number you type is used as-is.
 function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
@@ -743,6 +744,7 @@ function ratioPlanHtml(selected, xpNeeded, currentLevel, log, title) {
   selected.forEach(({ item }, n) => {
     const xpEach = xpWithBonus(item.xp, log.bonus);
     const count = ratios[n] * rounds;
+    if (!count) return; // left empty: not part of the combined plan
     totalCrafts += count;
     planItems.push({ item, count });
     html += `
@@ -769,17 +771,21 @@ function singleBreakdownHtml(selected, xpNeeded, currentLevel, log, title) {
   let html = `
     <h3>If you craft only one item (${title})</h3>
     <table>
-      <tr><th>Item</th><th>Req. Lv</th><th>Base XP</th><th>XP w/ logs</th><th>Crafts needed</th><th>Usable?</th></tr>`;
+      <tr><th>Item</th><th>Req. Lv</th><th>Base XP</th><th>XP w/ logs</th><th>Crafts needed</th><th>Materials used</th><th>Usable?</th></tr>`;
 
   selected.forEach(({ item }) => {
     const xpEach = xpWithBonus(item.xp, log.bonus);
+    const count = Math.ceil(xpNeeded / xpEach);
+    const mats = Object.entries(item.mats)
+      .map(([m, per]) => `${fmt(per * count)} ${matIconImg(m)}${m}`).join(", ");
     html += `
       <tr>
         <td>${iconImg(item)}${item.name}</td>
         <td>${item.level}</td>
         <td>${fmt(item.xp)}</td>
         <td>${fmt(xpEach)}</td>
-        <td>${fmt(Math.ceil(xpNeeded / xpEach))}</td>
+        <td>${fmt(count)}</td>
+        <td>${mats}</td>
         <td>${usableCell(currentLevel, item)}</td>
       </tr>`;
   });
@@ -831,11 +837,11 @@ export const crafting = {
       <div class="groups"></div>
       <div class="mixSection" hidden>
         <h3>Crafts per round</h3>
-        <p class="note">Set how many of each item to craft per round. Leave everything
-          at 1 for equal crafts. Cloth and leather left at 1 are calculated as exactly
-          what your selected gear uses; type another number to set them yourself.</p>
+        <p class="note">Optional. Fill in how many of each item to craft per round to
+          get a combined plan; items left empty are skipped. Cloth and leather left
+          empty are calculated as exactly what your gear uses.</p>
         <div class="mixInputs"></div>
-        <button type="button" class="resetRatiosBtn">Reset all to 1</button>
+        <button type="button" class="resetRatiosBtn">Clear all</button>
       </div>`;
 
     qa(".craftTab").forEach((btn) =>
@@ -846,7 +852,7 @@ export const crafting = {
     q(".clearBtn").addEventListener("click", () => setVisibleItems(false));
     q(".resetRatiosBtn").addEventListener("click", () => {
       savedRatios.clear();
-      qa(".ratioInput").forEach((el) => { el.value = 1; });
+      qa(".ratioInput").forEach((el) => { el.value = ""; });
     });
 
     renderGroups();
@@ -871,8 +877,9 @@ export const crafting = {
     const title = `${log.name}${log.bonus ? ` +${log.bonus}%` : ""}`;
     let html = "";
 
-    // Combined plan (2+ items)
-    if (selected.length > 1) {
+    // Combined plan: only when 2+ items are selected and at least one box is filled in
+    const anyRatio = selected.some(({ i }) => typedRatio(i) > 0);
+    if (selected.length > 1 && anyRatio) {
       html += ratioPlanHtml(selected, xpNeeded, currentLevel, log, title);
     }
 
